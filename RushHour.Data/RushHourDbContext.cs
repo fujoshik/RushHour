@@ -12,10 +12,10 @@ namespace RushHour.Data
     {
         public RushHourDbContext()
             : base() { }
-
         public RushHourDbContext(DbContextOptions<RushHourDbContext> options) 
             : base(options) { }
 
         public DbSet<Provider> Providers { get; set; }
+        public DbSet<Account> Accounts { get; set; }
     }
 }

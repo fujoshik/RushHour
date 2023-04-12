@@ -22,6 +22,32 @@ namespace RushHour.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("RushHour.Data.Entities.Account", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Accounts");
+                });
+
             modelBuilder.Entity("RushHour.Data.Entities.Provider", b =>
                 {
                     b.Property<Guid>("Id")
@@ -55,13 +81,10 @@ namespace RushHour.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BusinessDomain")
+                    b.HasIndex("Name", "BusinessDomain")
                         .IsUnique();
 
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("Providers", (string)null);
+                    b.ToTable("Providers");
                 });
 #pragma warning restore 612, 618
         }
