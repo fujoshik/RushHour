@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace RushHour.Data.Entities
 {
     [Table("Providers")]
-    [Index(nameof(Name), nameof(Domain), IsUnique = true)]
+    [Index(nameof(Name), nameof(BusinessDomain), IsUnique = true)]
     public class Provider : BaseEntity
     {
         [Required]

@@ -12,6 +12,21 @@ namespace RushHour.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Accounts",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Role = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Accounts", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Providers",
                 columns: table => new
                 {
@@ -30,21 +45,18 @@ namespace RushHour.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Providers_BusinessDomain",
+                name: "IX_Providers_Name_BusinessDomain",
                 table: "Providers",
-                column: "BusinessDomain",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Providers_Name",
-                table: "Providers",
-                column: "Name",
+                columns: new[] { "Name", "BusinessDomain" },
                 unique: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Accounts");
+
             migrationBuilder.DropTable(
                 name: "Providers");
         }
