@@ -4,12 +4,6 @@ using RushHour.Data.Extensions;
 using RushHour.Domain.Abstractions.Repositories;
 using RushHour.Domain.DTOs;
 using RushHour.Domain.DTOs.ProviderDtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RushHour.Data.Repositories
 {
@@ -70,7 +64,7 @@ namespace RushHour.Data.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<PaginatedResult<GetProviderDto>> GetAllAsync(int index, int pageSize)
+        public async Task<PaginatedResult<GetProviderDto>> GetPageAsync(int index, int pageSize)
         {
             return await Providers.Select(dto => new GetProviderDto()
             {
@@ -107,13 +101,13 @@ namespace RushHour.Data.Repositories
             };
         }
 
-        public async Task UpdateAsync(GetProviderDto dto)
+        public async Task UpdateAsync(Guid id, CreateProviderDto dto)
         {
-            var entity = await Providers.FirstOrDefaultAsync(x => x.Id == dto.Id);
+            var entity = await Providers.FirstOrDefaultAsync(x => x.Id == id);
 
             if (entity is null)
             {
-                throw new KeyNotFoundException($"No such {typeof(Provider)} with id: {dto.Id}");
+                throw new KeyNotFoundException($"No such {typeof(Provider)} with id: {id}");
             }
 
             entity.Name = dto.Name;

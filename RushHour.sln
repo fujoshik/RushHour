@@ -9,9 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RushHour.Domain", "RushHour
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RushHour.Services", "RushHour.Services\RushHour.Services.csproj", "{0190D941-F1E9-4484-BDE4-0C4047B8EAFE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RushHour.API", "RushHour.API\RushHour.API.csproj", "{446F1739-A8C3-4D6D-A445-398F40DBCC99}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RushHour.API", "RushHour.API\RushHour.API.csproj", "{446F1739-A8C3-4D6D-A445-398F40DBCC99}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{BBF2C475-1C23-4025-9177-AD1ECFB567B0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{BBF2C475-1C23-4025-9177-AD1ECFB567B0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

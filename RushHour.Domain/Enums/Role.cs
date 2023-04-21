@@ -8,9 +8,9 @@ namespace RushHour.Domain.Enums
 {
     public enum Role
     {
-        ADMIN,
-        PROVIDER_ADMIN,
-        EMPLOYEE,
-        CLIENT
+        Admin,
+        ProviderAdmin,
+        Employee,
+        Client
     }
 }
