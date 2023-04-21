@@ -5,10 +5,10 @@ namespace RushHour.Domain.Abstractions.Services
 {
     public interface IProviderService
     {
-        Task<GetProviderDto> CreateAsync(CreateProviderDto entity);
-        Task UpdateAsync(GetProviderDto entity);
+        Task<GetProviderDto> CreateAsync(CreateProviderDto dto);
+        Task UpdateAsync(Guid id, CreateProviderDto dto);
         Task<GetProviderDto> GetByIdAsync(Guid id);
-        Task<PaginatedResult<GetProviderDto>> GetAllAsync(int index, int pageSize);
+        Task<PaginatedResult<GetProviderDto>> GetPageAsync(int index, int pageSize);
         Task DeleteAsync(Guid id);
     }
 }

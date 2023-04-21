@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RushHour.Data;
 
@@ -11,9 +12,11 @@ using RushHour.Data;
 namespace RushHour.Data.Migrations
 {
     [DbContext(typeof(RushHourDbContext))]
-    partial class RushHourDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230419130215_AddEmployeesInProvider")]
+    partial class AddEmployeesInProvider
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,10 +53,10 @@ namespace RushHour.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("c3a7daae-9d26-4173-b5ed-420887cc0b1d"),
+                            Id = new Guid("1fcb83f2-f5c8-4439-ae50-783c42ae60b5"),
                             Email = "admin",
                             FullName = "John Doe",
-                            Password = "$2a$11$7bNXGiBVTmjLpuYADa8zQ.7FBT3MtrZg1bU0RoaVY3O3yVRu4nes2",
+                            Password = "$2a$11$LIZFE13ep2IUU7ESwhc9WuxiZ7iLSp4T4j8nSXmeOk9zmCBz9W5/q",
                             Role = 0
                         });
                 });
@@ -143,7 +146,7 @@ namespace RushHour.Data.Migrations
                     b.HasOne("RushHour.Data.Entities.Provider", "Provider")
                         .WithMany("Employees")
                         .HasForeignKey("ProviderId")
-                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Account");

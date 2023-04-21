@@ -37,9 +37,9 @@ namespace RushHour.Services.Services
             await _repository.DeleteAsync(id);
         }
 
-        public async Task<PaginatedResult<GetProviderDto>> GetAllAsync(int index, int pageSize)
+        public async Task<PaginatedResult<GetProviderDto>> GetPageAsync(int index, int pageSize)
         {
-            return await _repository.GetAllAsync(index, pageSize);
+            return await _repository.GetPageAsync(index, pageSize);
         }
 
         public async Task<GetProviderDto> GetByIdAsync(Guid id)
@@ -49,9 +49,9 @@ namespace RushHour.Services.Services
             return provider;
         }
 
-        public async Task UpdateAsync(GetProviderDto dto)
+        public async Task UpdateAsync(Guid id, CreateProviderDto dto)
         {
-            await _repository.UpdateAsync(dto);
+            await _repository.UpdateAsync(id, dto);
         }
     }
 }

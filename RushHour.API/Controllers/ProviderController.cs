@@ -16,9 +16,9 @@ namespace RushHour.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<GetProviderDto>>> GetAll([FromQuery] int index, [FromQuery] int pageSize)
+        public async Task<ActionResult<IEnumerable<GetProviderDto>>> GetPage([FromQuery] int index, [FromQuery] int pageSize)
         {
-            return Ok(await _service.GetAllAsync(index, pageSize));
+            return Ok(await _service.GetPageAsync(index, pageSize));
         }
 
         [HttpGet("{id}")]
@@ -48,7 +48,7 @@ namespace RushHour.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> EditProvider([FromRoute] Guid id, [FromBody] GetProviderDto provider)
+        public async Task<IActionResult> EditProvider([FromRoute] Guid id, [FromBody] CreateProviderDto provider)
         {
             if (!ModelState.IsValid)
             {
@@ -57,7 +57,7 @@ namespace RushHour.API.Controllers
 
             try
             {
-                await _service.UpdateAsync(provider);
+                await _service.UpdateAsync(id, provider);
             }
             catch (KeyNotFoundException ex)
             {

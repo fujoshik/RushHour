@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RushHour.Data;
 
@@ -11,9 +12,11 @@ using RushHour.Data;
 namespace RushHour.Data.Migrations
 {
     [DbContext(typeof(RushHourDbContext))]
-    partial class RushHourDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230419111158_AddHashedAdminPassword")]
+    partial class AddHashedAdminPassword
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,10 +53,10 @@ namespace RushHour.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("c3a7daae-9d26-4173-b5ed-420887cc0b1d"),
+                            Id = new Guid("1900dc82-709a-48a8-a3da-e6c29423dd4c"),
                             Email = "admin",
                             FullName = "John Doe",
-                            Password = "$2a$11$7bNXGiBVTmjLpuYADa8zQ.7FBT3MtrZg1bU0RoaVY3O3yVRu4nes2",
+                            Password = "$2a$11$Wkz.zkPZk27/jX8f2eHyMeDWFuvb2mRn1lFP/TxxanS3AJKGCfM/S",
                             Role = 0
                         });
                 });
@@ -141,19 +144,14 @@ namespace RushHour.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("RushHour.Data.Entities.Provider", "Provider")
-                        .WithMany("Employees")
+                        .WithMany()
                         .HasForeignKey("ProviderId")
-                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Account");
 
                     b.Navigation("Provider");
-                });
-
-            modelBuilder.Entity("RushHour.Data.Entities.Provider", b =>
-                {
-                    b.Navigation("Employees");
                 });
 #pragma warning restore 612, 618
         }
