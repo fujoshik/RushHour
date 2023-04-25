@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using RushHour.API.Configuration;
 using RushHour.Data;
 using RushHour.Data.Repositories;
 using RushHour.Domain.Abstractions.Repositories;
@@ -21,7 +23,9 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSetting
 var connectionString = builder.Configuration.GetConnectionString("RushHourConnection");
 
 builder.Services.AddDbContext<RushHourDbContext>(opt =>
-    opt.UseSqlServer(connectionString));
+{
+    opt.UseSqlServer(connectionString);
+}, ServiceLifetime.Transient);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
@@ -69,12 +73,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddScoped<IProviderRepository, ProviderRepository>();
-builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
-builder.Services.AddScoped<IAccountRepository, AccountRepository>();
-builder.Services.AddScoped<IProviderService, ProviderService>();
-builder.Services.AddScoped<IEmployeeService, EmployeeService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+builder.AddCustomRepositories();
+builder.AddCustomServices();
 
 builder.Services.AddSingleton(new JwtSettings()
 {

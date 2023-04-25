@@ -14,6 +14,7 @@ namespace RushHour.Data
         public DbSet<Provider> Providers { get; set; }
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Employee> Employees { get; set; }
+        public DbSet<Client> Clients { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -4,6 +4,7 @@ using RushHour.Data.Extensions;
 using RushHour.Domain.Abstractions.Repositories;
 using RushHour.Domain.DTOs;
 using RushHour.Domain.DTOs.AccountDtos;
+using RushHour.Domain.Enums;
 
 namespace RushHour.Data.Repositories
 {
@@ -39,6 +40,7 @@ namespace RushHour.Data.Repositories
                 Id = entity.Id,
                 Email = entity.Email,
                 FullName = entity.FullName,
+                Password = entity.Password,
                 Role = entity.Role
             };
         }
@@ -85,8 +87,21 @@ namespace RushHour.Data.Repositories
 
             entity.Email = dto.Email;
             entity.FullName = dto.FullName;
-            entity.Password = dto.Password;
             entity.Role = dto.Role;
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(Guid id)
+        {
+            var entity = await Accounts.FirstOrDefaultAsync(x => x.Id == id);
+
+            if (entity is null)
+            {
+                throw new KeyNotFoundException($"No such {typeof(Account)} with id: {id}");
+            }
+
+            _context.Remove(entity);
 
             await _context.SaveChangesAsync();
         }

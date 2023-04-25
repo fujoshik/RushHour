@@ -4,12 +4,6 @@ using RushHour.Domain.DTOs;
 using RushHour.Domain.DTOs.AccountDtos;
 using RushHour.Domain.DTOs.EmployeeDtos;
 using RushHour.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RushHour.Services.Services
 {
@@ -17,18 +11,22 @@ namespace RushHour.Services.Services
     {
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IAccountRepository _accountRepository;
+        private readonly IProviderRepository _providerRepository;
 
-        public EmployeeService(IEmployeeRepository employeeRepository, IAccountRepository accountRepository)
+        public EmployeeService(IEmployeeRepository employeeRepository, IAccountRepository accountRepository, IProviderRepository providerRepository)
         {
             this._employeeRepository = employeeRepository;
             this._accountRepository = accountRepository;
+           this._providerRepository = providerRepository;
         }
 
         public async Task<GetEmployeeDto> CreateEmployeeAsync(CreateEmployeeDto dto)
         {
             var employeeAccount = dto.Account;
 
-            if(!employeeAccount.Email.EndsWith($"@{dto.Provider.BusinessDomain}.com"))
+            var provider = await _providerRepository.GetByIdAsync(dto.ProviderId);
+
+            if(!employeeAccount.Email.EndsWith($"@{provider.BusinessDomain}.com"))
             {
                 throw new ArgumentException("Employee email should contain their provider's business domain");
             }
@@ -77,7 +75,12 @@ namespace RushHour.Services.Services
             {
                 throw new ArgumentNullException(nameof(id));
             }
-            await _employeeRepository.DeleteAsync(id);
+
+            var employee = await _employeeRepository.GetByIdAsync(id);
+
+            var accountId = employee.AccountId;
+
+            await _accountRepository.DeleteAsync(accountId);
         }
 
         public async Task<PaginatedResult<GetEmployeeDto>> GetPageAsync(int index, int pageSize)
@@ -88,6 +91,8 @@ namespace RushHour.Services.Services
         public async Task<GetEmployeeDto> GetEmployeeByIdAsync(Guid id)
         {
             GetEmployeeDto employee = await _employeeRepository.GetByIdAsync(id);
+
+            employee.Account = await GetAccountByIdAsync(employee.AccountId);
 
             return employee;
         }
@@ -126,12 +131,12 @@ namespace RushHour.Services.Services
 
             if (currentAccount.Role == Role.Admin)
             {
-                AdminUpdateAccountAsync(employeeId, account);
+                await AdminUpdateAccountAsync(employeeId, account);
             }
 
             else if(currentAccount.Role == Role.ProviderAdmin)
             {
-                ProviderAdminUpdateAccountAsync(employeeId, account, getAccountDto);
+                await ProviderAdminUpdateAccountAsync(employeeId, account, getAccountDto);
             }
         }
 
@@ -149,7 +154,9 @@ namespace RushHour.Services.Services
 
             var employee = await _employeeRepository.GetByIdAsync(employeeId);
 
-            await _accountRepository.UpdateAsync(employee.Account.Id, dto);
+            employee.Account = await GetAccountByIdAsync(employee.AccountId);
+
+            await _accountRepository.UpdateAsync(employee.AccountId, dto);
         }
 
         private async Task ProviderAdminUpdateAccountAsync(Guid accountToChangeId, CreateAccountDto accountToChange, GetAccountDto currentAccount)

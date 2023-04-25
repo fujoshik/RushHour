@@ -44,7 +44,8 @@ namespace RushHour.Data.Repositories
                 Phone = entity.Phone,
                 RatePerHour = entity.RatePerHour,
                 HireDate = entity.HireDate,
-                ProviderId = entity.ProviderId
+                ProviderId = entity.ProviderId,
+                AccountId = entity.AccountId
             };
         }
 
@@ -98,7 +99,8 @@ namespace RushHour.Data.Repositories
                 Phone = entity.Phone,
                 RatePerHour = entity.RatePerHour,
                 HireDate = entity.HireDate,
-                ProviderId = entity.ProviderId
+                ProviderId = entity.ProviderId,
+                AccountId = entity.AccountId
             };
         }
 

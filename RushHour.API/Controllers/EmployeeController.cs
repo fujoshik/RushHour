@@ -4,15 +4,14 @@ using RushHour.Domain.DTOs.EmployeeDtos;
 using RushHour.Domain.Enums;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using RushHour.Domain.DTOs.AccountDtos;
 using RushHour.API.Configuration;
 
 namespace RushHour.API.Controllers
 {
     [ApiController]
     [Route("api/employees")]
-    [AuthorizeRoles(Role.Admin | Role.ProviderAdmin | Role.Employee)]
-    public class EmployeeController : Controller
+    [AuthorizeRoles(Role.Admin, Role.ProviderAdmin, Role.Employee)]
+    public class EmployeeController : ControllerBase
     {
         private readonly IEmployeeService _service;
 
@@ -50,7 +49,7 @@ namespace RushHour.API.Controllers
 
             var createdEmployee = await _service.CreateEmployeeAsync(employee);
 
-            return CreatedAtAction(nameof(GetEmployeeDto), new { id = createdEmployee.Id }, createdEmployee);
+            return CreatedAtAction(nameof(GetEmployee), new { id = createdEmployee.Id }, createdEmployee);
         }
 
         [HttpPut("{id}")]
