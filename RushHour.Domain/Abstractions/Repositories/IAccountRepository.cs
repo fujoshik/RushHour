@@ -9,5 +9,6 @@ namespace RushHour.Domain.Abstractions.Repositories
         Task UpdateAsync(Guid id, CreateAccountDto dto);
         Task<AccountDto> GetByIdAsync(Guid id);
         Task<PaginatedResult<AccountDto>> GetPageAsync(int index, int pageSize);
+        Task DeleteAsync(Guid id);
     }
 }

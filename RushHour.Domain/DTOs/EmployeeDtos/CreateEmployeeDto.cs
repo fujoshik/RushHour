@@ -25,8 +25,6 @@ namespace RushHour.Domain.DTOs.EmployeeDtos
 
         public Guid ProviderId { get; set; }
 
-        public CreateProviderDto Provider { get; set; }
-
         public CreateAccountDto Account { get; set;}
     }
 }

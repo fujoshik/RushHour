@@ -2,17 +2,19 @@
 using RushHour.Domain.DTOs.ProviderDtos;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace RushHour.Domain.DTOs.EmployeeDtos
 {
-    public class GetEmployeeDto : BaseDto
+    public class CreateEmployeeWithoutProviderDto
     {
+        [RegularExpression(@"^[A-Za-z0-9]+$")]
         public string Title { get; set; }
 
+        [Phone]
         public string Phone { get; set; }
 
         public decimal RatePerHour { get; set; }
@@ -21,8 +23,6 @@ namespace RushHour.Domain.DTOs.EmployeeDtos
 
         public Guid ProviderId { get; set; }
 
-        public Guid AccountId { get; set; }
-
-        public GetAccountDto Account { get; set; }
+        public CreateAccountDto Account { get; set; }
     }
 }

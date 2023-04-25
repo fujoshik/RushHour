@@ -1,11 +1,7 @@
-﻿using RushHour.Domain.Enums;
-using System;
-using System.Collections.Generic;
+﻿using RushHour.Domain.CustomAttributes;
+using RushHour.Domain.Enums;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RushHour.Domain.DTOs.AccountDtos
 {
@@ -18,7 +14,7 @@ namespace RushHour.Domain.DTOs.AccountDtos
         public string FullName { get; set; }
 
         [PasswordPropertyText]
-        [RegularExpression(@"(?=.*\d)(?=.*[A-Z])")]
+        [Password]
         public string Password { get; set; }
 
         public Role Role { get; set; }

@@ -3,15 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using RushHour.API.Configuration;
 using RushHour.Domain.Abstractions.Services;
 using RushHour.Domain.DTOs;
-using RushHour.Domain.DTOs.AccountDtos;
-using RushHour.Domain.Enums;
 
 namespace RushHour.API.Controllers
 {
     [ApiController]
     [Route("api/auth")]
-    [AuthorizeRoles(Role.Admin | Role.ProviderAdmin | Role.Employee)]
-    public class AuthController : Controller
+    public class AuthController : ControllerBase
     {
         private readonly IAuthService _service;
 
