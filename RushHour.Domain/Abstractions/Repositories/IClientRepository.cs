@@ -9,7 +9,7 @@ namespace RushHour.Domain.Abstractions.Repositories
         Task<GetClientDto> CreateAsync(GetAccountDto account, CreateClientDto client);
         Task UpdateAsync(Guid id, UpdateClientDto dto);
         Task<GetClientDto> GetByIdAsync(Guid id);
-        Task<PaginatedResult<GetClientDto>> GetPageAsync(int index, int pageSize);
+        Task<PaginatedResult<GetClientDto>> GetPageAsync(int index, int pageSize, Guid requesterClientId = default(Guid));
         Task DeleteAsync(Guid id);
     }
 }

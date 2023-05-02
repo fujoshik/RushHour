@@ -105,5 +105,10 @@ namespace RushHour.Data.Repositories
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task<bool> CheckIfAnyMatchesIdAndRole(Guid id, Role role)
+        {
+            return await Accounts.AnyAsync(a => a.Id == id && a.Role == role);
+        }
     }
 }

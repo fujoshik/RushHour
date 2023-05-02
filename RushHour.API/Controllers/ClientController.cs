@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RushHour.API.Configuration;
+using RushHour.API.Extensions;
 using RushHour.Domain.Abstractions.Services;
 using RushHour.Domain.DTOs.ClientDtos;
 using RushHour.Domain.Enums;
-using System.Security.Claims;
 
 namespace RushHour.API.Controllers
 {
@@ -14,13 +14,16 @@ namespace RushHour.API.Controllers
     public class ClientController : ControllerBase
     {
         private readonly IClientService _service;
+        private readonly Guid requesterId;
 
         public ClientController(IClientService service)
         {
             _service = service;
+            requesterId = this.GetRequesterId();
         }
 
         [HttpGet]
+        [AuthorizeRoles(Role.Admin)]
         public async Task<ActionResult<IEnumerable<GetClientDto>>> GetPage([FromQuery] int index, [FromQuery] int pageSize)
         {
             return Ok(await _service.GetPageAsync(index, pageSize));
@@ -29,7 +32,7 @@ namespace RushHour.API.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<GetClientDto>> GetClient([FromRoute] Guid id)
         {
-            var client = await _service.GetClientByIdAsync(id);
+            var client = await _service.GetClientByIdAsync(requesterId, id);
 
             if (client is null)
             {
@@ -56,8 +59,6 @@ namespace RushHour.API.Controllers
         [Authorize]
         public async Task<IActionResult> EditClient([FromRoute] Guid id, [FromBody] UpdateClientDto client)
         {
-            var requesterId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-
             if (!ModelState.IsValid)
             {
                 return BadRequest();
@@ -78,7 +79,7 @@ namespace RushHour.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEmployee([FromRoute] Guid id)
         {
-            var client = await _service.GetClientByIdAsync(id);
+            var client = await _service.GetClientByIdAsync(requesterId, id);
 
             if (client is null)
             {

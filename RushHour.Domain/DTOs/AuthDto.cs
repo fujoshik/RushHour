@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace RushHour.Domain.DTOs
+﻿namespace RushHour.Domain.DTOs
 {
     public class AuthDto
     {

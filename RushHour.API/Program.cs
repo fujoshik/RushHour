@@ -1,17 +1,10 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RushHour.API.Configuration;
 using RushHour.Data;
-using RushHour.Data.Repositories;
-using RushHour.Domain.Abstractions.Repositories;
-using RushHour.Domain.Abstractions.Services;
-using RushHour.Domain.DTOs;
 using RushHour.Domain.Infrastructure;
-using RushHour.Services.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);

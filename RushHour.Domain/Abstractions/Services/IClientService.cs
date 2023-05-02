@@ -6,8 +6,8 @@ namespace RushHour.Domain.Abstractions.Services
     public interface IClientService
     {
         Task<GetClientDto> CreateClientAsync(CreateClientDto dto);
-        Task UpdateClientAsync(Guid id, UpdateClientDto dto, string requesterId);
-        Task<GetClientDto> GetClientByIdAsync(Guid id);
+        Task UpdateClientAsync(Guid id, UpdateClientDto dto, Guid requesterId);
+        Task<GetClientDto> GetClientByIdAsync(Guid requesterId, Guid id);
         Task<PaginatedResult<GetClientDto>> GetPageAsync(int index, int pageSize);
         Task DeleteAsync(Guid id);
     }
