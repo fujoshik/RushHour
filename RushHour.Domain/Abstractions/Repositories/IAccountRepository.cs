@@ -1,5 +1,6 @@
 ﻿using RushHour.Domain.DTOs;
 using RushHour.Domain.DTOs.AccountDtos;
+using RushHour.Domain.Enums;
 
 namespace RushHour.Domain.Abstractions.Repositories
 {
@@ -10,5 +11,6 @@ namespace RushHour.Domain.Abstractions.Repositories
         Task<AccountDto> GetByIdAsync(Guid id);
         Task<PaginatedResult<AccountDto>> GetPageAsync(int index, int pageSize);
         Task DeleteAsync(Guid id);
+        Task<bool> CheckIfAnyMatchesIdAndRole(Guid id, Role role);
     }
 }

@@ -20,6 +20,13 @@ namespace RushHour.Services.Services
             _settings = settings;
         }
 
+        public async Task RegisterAsync(CreateAccountDto accountDto)
+        {
+            accountDto.Password = BCrypt.Net.BCrypt.HashPassword(accountDto.Password);
+
+            await _repository.CreateAsync(accountDto);
+        }
+
         public async Task<string> LoginAsync(string email, string password)
         {
             var allUsers = await _repository.GetPageAsync(1, 10);

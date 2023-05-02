@@ -76,9 +76,21 @@ namespace RushHour.Services.Services
             return await _clientRepository.GetPageAsync(index, pageSize);
         }
 
-        public async Task<GetClientDto> GetClientByIdAsync(Guid id)
+        public async Task<GetClientDto> GetClientByIdAsync(Guid requesterId, Guid id)
         {
-            return await _clientRepository.GetByIdAsync(id);
+            if (requesterId == default(Guid))
+            {
+                throw new ArgumentNullException(nameof(requesterId));
+            }
+
+            var client = await _clientRepository.GetByIdAsync(id);
+
+            if(!await CheckClientId(requesterId))
+            {
+                throw new UnauthorizedAccessException("Can't access a different client");
+            }
+
+            return client;
         }
 
         private async Task<GetAccountDto> GetAccountByIdAsync(Guid id)
@@ -94,8 +106,13 @@ namespace RushHour.Services.Services
             };
         }
 
-        public async Task UpdateClientAsync(Guid id, UpdateClientDto dto, string requesterId)
+        public async Task UpdateClientAsync(Guid id, UpdateClientDto dto, Guid requesterId)
         {
+            if (requesterId == default(Guid))
+            {
+                throw new ArgumentNullException(nameof(requesterId));
+            }
+
             var updateAccount = new UpdateAccountWithoutRole()
             {
                 Email = dto.Account.Email,
@@ -107,21 +124,37 @@ namespace RushHour.Services.Services
             await _clientRepository.UpdateAsync(id, dto);
         }
 
-        private async Task UpdateAccountAsync(Guid clientId, UpdateAccountWithoutRole account, string requesterId)
+        private async Task UpdateAccountAsync(Guid clientId, UpdateAccountWithoutRole account, Guid requesterId)
         {
-            var currentAccount = await _accountRepository.GetByIdAsync(Guid.Parse(requesterId));
+            var currentAccount = await _accountRepository.GetByIdAsync(requesterId);
 
             if (currentAccount.Role == Role.Admin)
             {
                 await AdminUpdateAccountAsync(clientId, account);
+            }
+            else if(currentAccount.Role == Role.Client)
+            {
+                var client = await _clientRepository.GetByIdAsync(clientId);
+
+                if(client.AccountId != currentAccount.Id)
+                {
+                    throw new UnauthorizedAccessException("Can't access a different client");
+                }
+
+                var createAccount = new CreateAccountDto()
+                {
+                    Email = account.Email,
+                    FullName = account.FullName,
+                    Role = Role.Client
+                };
+
+                await _accountRepository.UpdateAsync(client.AccountId, createAccount);
             }
         }
 
         private async Task AdminUpdateAccountAsync(Guid clientId, UpdateAccountWithoutRole dto)
         {
             var client = await _clientRepository.GetByIdAsync(clientId);
-
-            client.Account = await GetAccountByIdAsync(client.AccountId);
 
             var createAccount = new CreateAccountDto()
             {
@@ -131,6 +164,11 @@ namespace RushHour.Services.Services
             };
 
             await _accountRepository.UpdateAsync(client.AccountId, createAccount);
+        }
+
+        private async Task<bool> CheckClientId(Guid requesterId)
+        {
+            return await _accountRepository.CheckIfAnyMatchesIdAndRole(requesterId, Role.Client);
         }
     }
 }

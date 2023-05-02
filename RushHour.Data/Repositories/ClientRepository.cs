@@ -5,6 +5,7 @@ using RushHour.Domain.DTOs.AccountDtos;
 using RushHour.Domain.DTOs;
 using RushHour.Domain.DTOs.ClientDtos;
 using RushHour.Data.Extensions;
+using System.Linq.Expressions;
 
 namespace RushHour.Data.Repositories
 {
@@ -57,9 +58,16 @@ namespace RushHour.Data.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<PaginatedResult<GetClientDto>> GetPageAsync(int index, int pageSize)
+        public async Task<PaginatedResult<GetClientDto>> GetPageAsync(int index, int pageSize, Guid requesterClientId = default(Guid))
         {
-            return await Clients.Include(e => e.Account).Select(dto => new GetClientDto()
+            var clients = Clients.Include(e => e.Account).AsQueryable();
+
+            if (requesterClientId != Guid.Empty)
+            {
+                clients = clients.Where(e => e.AccountId == requesterClientId);
+            }
+
+            return await Clients.Select(dto => new GetClientDto()
             {
                 Id = dto.Id,
                 Phone = dto.Phone,

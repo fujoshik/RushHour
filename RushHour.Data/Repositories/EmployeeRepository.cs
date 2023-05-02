@@ -51,7 +51,9 @@ namespace RushHour.Data.Repositories
 
         public async Task DeleteAsync(Guid id)
         {
-            var entity = await Employees.Include(e => e.Account).FirstOrDefaultAsync(x => x.Id == id);
+            var entity = await Employees
+                .Include(e => e.Account)
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             if (entity is null)
             {
@@ -63,9 +65,16 @@ namespace RushHour.Data.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<PaginatedResult<GetEmployeeDto>> GetPageAsync(int index, int pageSize)
+        public async Task<PaginatedResult<GetEmployeeDto>> GetPageAsync(int index, int pageSize, Guid requesterProviderId = default(Guid))
         {
-            return await Employees.Include(e => e.Account).Select(dto => new GetEmployeeDto()
+            var employees = Employees.Include(e => e.Account).AsQueryable();
+
+            if (requesterProviderId != Guid.Empty)
+            {
+                employees = employees.Where(e => e.ProviderId == requesterProviderId);               
+            }
+            
+            return await employees.Select(dto => new GetEmployeeDto()
             {
                 Id = dto.Id,
                 Title = dto.Title,
@@ -73,6 +82,7 @@ namespace RushHour.Data.Repositories
                 RatePerHour = dto.RatePerHour,
                 HireDate = dto.HireDate,
                 ProviderId = dto.ProviderId,
+                AccountId = dto.AccountId,
                 Account = new GetAccountDto()
                 {
                     Id = dto.Account.Id,
@@ -85,7 +95,9 @@ namespace RushHour.Data.Repositories
 
         public async Task<GetEmployeeDto> GetByIdAsync(Guid id)
         {
-            var entity = await Employees.FirstOrDefaultAsync(x => x.Id == id);
+            var entity = await Employees
+                .Include(e => e.Account)
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             if (entity is null)
             {
@@ -100,7 +112,14 @@ namespace RushHour.Data.Repositories
                 RatePerHour = entity.RatePerHour,
                 HireDate = entity.HireDate,
                 ProviderId = entity.ProviderId,
-                AccountId = entity.AccountId
+                AccountId = entity.AccountId,
+                Account = new GetAccountDto()
+                {
+                    Id = entity.Account.Id,
+                    FullName = entity.Account.FullName,
+                    Email = entity.Account.Email,
+                    Role = entity.Account.Role
+                }
             };
         }
 

@@ -5,10 +5,10 @@ namespace RushHour.Domain.Abstractions.Services
 {
     public interface IEmployeeService
     {      
-        Task<GetEmployeeDto> CreateEmployeeAsync(CreateEmployeeDto dto);
-        Task UpdateEmployeeAsync(Guid id, CreateEmployeeDto dto, string requesterId);
-        Task<GetEmployeeDto> GetEmployeeByIdAsync(Guid id);     
-        Task<PaginatedResult<GetEmployeeDto>> GetPageAsync(int index, int pageSize);
+        Task<GetEmployeeDto> CreateEmployeeAsync(Guid requesterId, CreateEmployeeDto dto);
+        Task UpdateEmployeeAsync(Guid id, CreateEmployeeDto dto, Guid requesterId);
+        Task<GetEmployeeDto> GetEmployeeByIdAsync(Guid requesterId, Guid id);     
+        Task<PaginatedResult<GetEmployeeDto>> GetPageAsync(int index, int pageSize, Guid requesterId);
         Task DeleteAsync(Guid id);
     }
 }

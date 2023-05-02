@@ -2,9 +2,8 @@
 using RushHour.Domain.Abstractions.Services;
 using RushHour.Domain.DTOs.EmployeeDtos;
 using RushHour.Domain.Enums;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 using RushHour.API.Configuration;
+using RushHour.API.Extensions;
 
 namespace RushHour.API.Controllers
 {
@@ -14,22 +13,26 @@ namespace RushHour.API.Controllers
     public class EmployeeController : ControllerBase
     {
         private readonly IEmployeeService _service;
+        private readonly Guid requesterId;
 
-        public EmployeeController(IEmployeeService service, IHttpContextAccessor httpContextAccessor)
+        public EmployeeController(IEmployeeService service)
         {
             _service = service;
+            requesterId = this.GetRequesterId();
         }
 
         [HttpGet]
+        [AuthorizeRoles(Role.Admin, Role.ProviderAdmin)]
         public async Task<ActionResult<IEnumerable<GetEmployeeDto>>> GetPage([FromQuery] int index, [FromQuery] int pageSize)
         {
-            return Ok(await _service.GetPageAsync(index, pageSize));
+            return Ok(await _service.GetPageAsync(index, pageSize, requesterId));
         }
 
         [HttpGet("{id}")]
+        [AuthorizeRoles(Role.Admin, Role.ProviderAdmin, Role.Employee)]
         public async Task<ActionResult<GetEmployeeDto>> GetEmployee([FromRoute] Guid id)
         {
-            var employee = await _service.GetEmployeeByIdAsync(id);
+            var employee = await _service.GetEmployeeByIdAsync(requesterId, id);
 
             if (employee is null)
             {
@@ -40,6 +43,7 @@ namespace RushHour.API.Controllers
         }
 
         [HttpPost]
+        [AuthorizeRoles(Role.Admin, Role.ProviderAdmin)]
         public async Task<ActionResult<GetEmployeeDto>> CreateEmployee([FromBody] CreateEmployeeDto employee)
         {
             if (!ModelState.IsValid)
@@ -47,17 +51,15 @@ namespace RushHour.API.Controllers
                 return BadRequest();
             }
 
-            var createdEmployee = await _service.CreateEmployeeAsync(employee);
+            var createdEmployee = await _service.CreateEmployeeAsync(requesterId, employee);
 
             return CreatedAtAction(nameof(GetEmployee), new { id = createdEmployee.Id }, createdEmployee);
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        [AuthorizeRoles(Role.Admin, Role.ProviderAdmin, Role.Employee)]
         public async Task<IActionResult> EditEmployee([FromRoute] Guid id, [FromBody] CreateEmployeeDto employee)
         {
-            var requesterId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-
             if (!ModelState.IsValid)
             {
                 return BadRequest();
@@ -76,9 +78,10 @@ namespace RushHour.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [AuthorizeRoles(Role.Admin, Role.ProviderAdmin)]
         public async Task<IActionResult> DeleteEmployee([FromRoute] Guid id)
         {
-            var employee = await _service.GetEmployeeByIdAsync(id);
+            var employee = await _service.GetEmployeeByIdAsync(requesterId, id);
 
             if (employee is null)
             {

@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RushHour.API.Configuration;
 using RushHour.Domain.Abstractions.Services;
 using RushHour.Domain.DTOs;
+using RushHour.Domain.DTOs.AccountDtos;
 
 namespace RushHour.API.Controllers
 {
