@@ -3,7 +3,6 @@ using RushHour.Domain.Abstractions.Services;
 using RushHour.Domain.DTOs;
 using RushHour.Domain.DTOs.ProviderDtos;
 using RushHour.Domain.Enums;
-using System.Xml;
 
 namespace RushHour.Services.Services
 {

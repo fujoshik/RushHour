@@ -15,6 +15,8 @@ namespace RushHour.Data
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Client> Clients { get; set; }
+        public DbSet<Activity> Activities { get; set; }
+        public DbSet<ActivityEmployee> ActivityEmployees { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -26,6 +28,20 @@ namespace RushHour.Data
                 .WithOne(e => e.Provider)
                 .HasForeignKey(e => e.ProviderId)
                 .OnDelete(DeleteBehavior.ClientCascade);
+
+            modelBuilder.Entity<Provider>()
+                .HasMany(p => p.Activities)
+                .WithOne(a => a.Provider)
+                .HasForeignKey(a => a.ProviderId)
+                .OnDelete(DeleteBehavior.ClientCascade);
+
+            modelBuilder.Entity<Employee>()
+                .HasMany(e => e.Activities)
+                .WithMany(a => a.Employees)
+                .UsingEntity<ActivityEmployee>();
+
+            modelBuilder.Entity<ActivityEmployee>()
+                .HasKey(a => new { a.ActivityId, a.EmployeeId });
         }
 
         private string HashAdminPassword()

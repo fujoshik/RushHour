@@ -15,10 +15,10 @@ namespace RushHour.API.Controllers
         private readonly IProviderService _service;
         private readonly Guid requesterId;
 
-        public ProviderController(IProviderService providerService)
+        public ProviderController(IProviderService providerService, IHttpContextAccessor http)
         {
             _service = providerService;
-            requesterId = this.GetRequesterId();
+            requesterId = http.GetRequesterId();
         }
 
         [HttpGet]

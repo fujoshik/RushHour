@@ -15,10 +15,10 @@ namespace RushHour.API.Controllers
         private readonly IEmployeeService _service;
         private readonly Guid requesterId;
 
-        public EmployeeController(IEmployeeService service)
+        public EmployeeController(IEmployeeService service, IHttpContextAccessor http)
         {
-            _service = service;
-            requesterId = this.GetRequesterId();
+            _service = service;            
+            requesterId = http.GetRequesterId();
         }
 
         [HttpGet]

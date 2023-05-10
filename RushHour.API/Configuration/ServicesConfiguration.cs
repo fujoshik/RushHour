@@ -8,12 +8,12 @@ namespace RushHour.API.Configuration
     public static class ServicesConfiguration
     {
         public static void AddCustomServices(this WebApplicationBuilder builder)
-        {            
+        {
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<IProviderService, ProviderService>();
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
             builder.Services.AddScoped<IClientService, ClientService>();
-            builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<IAuthService, AuthService>();            
         }
         public static void AddCustomRepositories(this WebApplicationBuilder builder)
         {
