@@ -10,5 +10,6 @@ namespace RushHour.Domain.Abstractions.Services
         Task<GetEmployeeDto> GetEmployeeByIdAsync(Guid requesterId, Guid id);     
         Task<PaginatedResult<GetEmployeeDto>> GetPageAsync(int index, int pageSize, Guid requesterId);
         Task DeleteAsync(Guid id);
+        Task<GetEmployeeDto> GetEmployeeByAccountAsync(Guid id);
     }
 }

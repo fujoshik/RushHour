@@ -32,5 +32,7 @@ namespace RushHour.Data.Entities
         public int WorkingDays { get; set; }
 
         public List<Employee> Employees { get; set; }
+
+        public List<Activity> Activities { get; set; }
     }
 }

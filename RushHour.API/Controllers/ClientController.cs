@@ -16,10 +16,10 @@ namespace RushHour.API.Controllers
         private readonly IClientService _service;
         private readonly Guid requesterId;
 
-        public ClientController(IClientService service)
+        public ClientController(IClientService service, IHttpContextAccessor http)
         {
             _service = service;
-            requesterId = this.GetRequesterId();
+            requesterId = http.GetRequesterId();
         }
 
         [HttpGet]

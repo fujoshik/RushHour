@@ -214,7 +214,7 @@ namespace RushHour.Services.Services
             await _accountRepository.UpdateAsync(accountToChangeId, accountToChange);
         }
 
-        private async Task<GetEmployeeDto> GetEmployeeByAccountAsync(Guid id)
+        public async Task<GetEmployeeDto> GetEmployeeByAccountAsync(Guid id)
         {
             var employees = await _employeeRepository.GetPageAsync(1, 10);
 

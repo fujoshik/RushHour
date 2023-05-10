@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RushHour.Data;
 
@@ -11,9 +12,11 @@ using RushHour.Data;
 namespace RushHour.Data.Migrations
 {
     [DbContext(typeof(RushHourDbContext))]
-    partial class RushHourDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230503203040_AddActivityTable")]
+    partial class AddActivityTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,10 +53,10 @@ namespace RushHour.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("cd873efe-d362-4276-bc1a-2a60e1cd8a5a"),
+                            Id = new Guid("0791f676-2509-4042-9a9c-8a753060954c"),
                             Email = "admin",
                             FullName = "John Doe",
-                            Password = "$2a$11$jNdq.f2aKXtM6pamIa1Hj.rpM5MUe/vTWfp9DkEJet39til2DwTba",
+                            Password = "$2a$11$Ws3z47R9MbAxJ4UhcwohVO/qudq5M0yzyGDbgy3sjEyGlsi9BwLOu",
                             Role = 0
                         });
                 });
@@ -82,21 +85,6 @@ namespace RushHour.Data.Migrations
                     b.HasIndex("ProviderId");
 
                     b.ToTable("Activities");
-                });
-
-            modelBuilder.Entity("RushHour.Data.Entities.ActivityEmployee", b =>
-                {
-                    b.Property<Guid>("ActivityId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("ActivityId", "EmployeeId");
-
-                    b.HasIndex("EmployeeId");
-
-                    b.ToTable("ActivityEmployees");
                 });
 
             modelBuilder.Entity("RushHour.Data.Entities.Client", b =>
@@ -132,6 +120,9 @@ namespace RushHour.Data.Migrations
                     b.Property<Guid>("AccountId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("ActivityId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("HireDate")
                         .HasColumnType("datetime2");
 
@@ -152,6 +143,8 @@ namespace RushHour.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AccountId");
+
+                    b.HasIndex("ActivityId");
 
                     b.HasIndex("ProviderId");
 
@@ -208,21 +201,6 @@ namespace RushHour.Data.Migrations
                     b.Navigation("Provider");
                 });
 
-            modelBuilder.Entity("RushHour.Data.Entities.ActivityEmployee", b =>
-                {
-                    b.HasOne("RushHour.Data.Entities.Activity", null)
-                        .WithMany()
-                        .HasForeignKey("ActivityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("RushHour.Data.Entities.Employee", null)
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("RushHour.Data.Entities.Client", b =>
                 {
                     b.HasOne("RushHour.Data.Entities.Account", "Account")
@@ -242,6 +220,10 @@ namespace RushHour.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("RushHour.Data.Entities.Activity", null)
+                        .WithMany("Employees")
+                        .HasForeignKey("ActivityId");
+
                     b.HasOne("RushHour.Data.Entities.Provider", "Provider")
                         .WithMany("Employees")
                         .HasForeignKey("ProviderId")
@@ -251,6 +233,11 @@ namespace RushHour.Data.Migrations
                     b.Navigation("Account");
 
                     b.Navigation("Provider");
+                });
+
+            modelBuilder.Entity("RushHour.Data.Entities.Activity", b =>
+                {
+                    b.Navigation("Employees");
                 });
 
             modelBuilder.Entity("RushHour.Data.Entities.Provider", b =>

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RushHour.Data;
 
@@ -11,9 +12,11 @@ using RushHour.Data;
 namespace RushHour.Data.Migrations
 {
     [DbContext(typeof(RushHourDbContext))]
-    partial class RushHourDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230504075644_AddActivityEmployeesTable")]
+    partial class AddActivityEmployeesTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

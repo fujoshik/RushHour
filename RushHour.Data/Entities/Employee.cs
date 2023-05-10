@@ -29,5 +29,7 @@ namespace RushHour.Data.Entities
 
         [Required]
         public Account Account { get; set; }
+
+        public List<Activity> Activities { get; set; }
     }
 }
