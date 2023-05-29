@@ -16,9 +16,10 @@ namespace RushHour.Data.Entities
 
         public Guid ProviderId { get; set; }
 
-        [Required]
         public Provider Provider { get; set; }
 
         public List<Employee> Employees { get; set; }
+
+        public List<Appointment> Appointments { get; set; }
     }
 }

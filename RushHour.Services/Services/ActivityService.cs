@@ -12,18 +12,23 @@ namespace RushHour.Services.Services
         private readonly IActivityRepository _activityRepository;
         private readonly IAccountRepository _accountRepository;
         private readonly IEmployeeService _employeeService;
+        private readonly IEmployeeRepository _employeeRepository;
         private readonly IActivityEmployeeRepository _activityEmployeeRepository;
 
-        public ActivityService(IActivityRepository activityRepository, IAccountRepository accountRepository, IEmployeeService employeeService, IActivityEmployeeRepository activityEmployeeRepository)
+        public ActivityService(IActivityRepository activityRepository, IAccountRepository accountRepository, 
+            IEmployeeService employeeService, IActivityEmployeeRepository activityEmployeeRepository, IEmployeeRepository employeeRepository)
         {
-            this._activityRepository = activityRepository;
-            this._accountRepository = accountRepository;
-            this._employeeService = employeeService;
-            this._activityEmployeeRepository = activityEmployeeRepository;
+            _activityRepository = activityRepository;
+            _accountRepository = accountRepository;
+            _employeeService = employeeService;
+            _activityEmployeeRepository = activityEmployeeRepository;
+            _employeeRepository = employeeRepository;
         }
 
         public async Task<GetActivityDto> CreateActivityAsync(Guid requesterAccountId, CreateActivityDto dto)
         {
+            await CheckEmployeesProviderIdAndActivityProviderId(dto.ProviderId, dto.EmployeeIds);
+
             var getActivity = new GetActivityDto()
             {
                 Name = dto.Name,
@@ -33,10 +38,12 @@ namespace RushHour.Services.Services
                 EmployeeIds = dto.EmployeeIds,
             };
 
-            await CheckProviderAdminIdAndActivityProviderId(requesterAccountId, getActivity.ProviderId);                      
+            await CheckRequesterIdAndRole(requesterAccountId, getActivity.ProviderId);                      
 
             var activity = await _activityRepository.CreateAsync(dto);
             
+            activity.EmployeeIds = dto.EmployeeIds;
+
             await _activityEmployeeRepository.CreateActivityWithManyEmployeesAsync(activity.Id, dto.EmployeeIds);
 
             return activity;
@@ -63,16 +70,24 @@ namespace RushHour.Services.Services
 
             var currentAccount = await _accountRepository.GetByIdAsync(requesterAccountId);
 
+            PaginatedResult<GetActivityDto> activities = new(new List<GetActivityDto>(), 0);
+
             if (currentAccount.Role == Role.ProviderAdmin)
             {
-                return await _activityRepository.GetPageAsync(index, pageSize, requesterAccountId);
-            }
+                var currentAccountEmployee = await _employeeService.GetEmployeeByAccountAsync(requesterAccountId);
 
-            var activities =  await _activityRepository.GetPageAsync(index, pageSize);
+                activities = await _activityRepository.GetPageAsync(index, pageSize, currentAccountEmployee.ProviderId);
+            }
+            else
+            {
+                activities = await _activityRepository.GetPageAsync(index, pageSize);
+            }
 
             foreach (var activity in activities.Result)
             {
                 var actEmps = await _activityEmployeeRepository.GetAllEmployeesOfActivityAsync(activity.Id);
+
+                activity.EmployeeIds = new();
 
                 activity.EmployeeIds.AddRange(actEmps.Select(x => x.EmployeeId));
             }
@@ -89,9 +104,11 @@ namespace RushHour.Services.Services
             
             var activity = await _activityRepository.GetByIdAsync(id);
 
-            await CheckProviderAdminIdAndActivityProviderId(requesterAccountId, activity.ProviderId);
+            await CheckRequesterIdAndRole(requesterAccountId, activity.ProviderId);
 
             var actEmps = await _activityEmployeeRepository.GetAllEmployeesOfActivityAsync(activity.Id);
+
+            activity.EmployeeIds = new();
 
             activity.EmployeeIds.AddRange(actEmps.Select(x => x.EmployeeId));
 
@@ -100,6 +117,8 @@ namespace RushHour.Services.Services
 
         public async Task UpdateActivityAsync(Guid id, CreateActivityDto dto, Guid requesterAccountId)
         {
+            await CheckEmployeesProviderIdAndActivityProviderId(dto.ProviderId, dto.EmployeeIds);
+
             var newActivityDto = new GetActivityDto()
             {
                 Id = id,
@@ -108,9 +127,9 @@ namespace RushHour.Services.Services
                 Duration = dto.Duration,
                 ProviderId = dto.ProviderId,
                 EmployeeIds = dto.EmployeeIds
-            };
+            };           
 
-            await CheckProviderAdminIdAndActivityProviderId(requesterAccountId, newActivityDto.ProviderId);
+            await CheckRequesterIdAndRole(requesterAccountId, newActivityDto.ProviderId);
 
             await UpdateActivityEmployeesAsync(newActivityDto);
 
@@ -161,13 +180,38 @@ namespace RushHour.Services.Services
             await _activityEmployeeRepository.DeleteActivityWithManyEmployeesAsync(newActivityDto.Id, empIdsToDelete);
         }
 
-        private async Task CheckProviderAdminIdAndActivityProviderId(Guid requesterAccountId, Guid dtoProviderId)
+        private async Task CheckRequesterIdAndRole(Guid requesterAccountId, Guid dtoProviderId)
         {
             var employee = await _employeeService.GetEmployeeByAccountAsync(requesterAccountId);
 
-            if (employee.Account.Role == Role.ProviderAdmin && dtoProviderId != employee.ProviderId)
+            if(employee is null)
+            {
+                var adminResult = await _accountRepository.CheckIfAnyMatchesIdAndRole(requesterAccountId, Role.Admin);
+
+                var clientResult = await _accountRepository.CheckIfAnyMatchesIdAndRole(requesterAccountId, Role.Client);
+
+                if (!adminResult && !clientResult)
+                {
+                    throw new UnauthorizedAccessException("No access");
+                }
+            }
+
+            else if(employee.Account.Role == Role.ProviderAdmin && dtoProviderId != employee.ProviderId)
             {
                 throw new UnauthorizedAccessException("Can't access an activity with different provider");
+            }
+        }
+
+        private async Task CheckEmployeesProviderIdAndActivityProviderId(Guid providerId, List<Guid> employeeIds)
+        {
+            foreach(var id in employeeIds)
+            {
+                var employee = await _employeeRepository.GetByIdAsync(id);
+
+                if(employee.ProviderId != providerId)
+                {
+                    throw new ArgumentException("The assigned employees and the activity must have the same provider id!");
+                }
             }
         }
     }

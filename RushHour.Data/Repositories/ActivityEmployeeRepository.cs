@@ -4,6 +4,7 @@ using RushHour.Data.Entities;
 using RushHour.Domain.DTOs.ActivityEmployeeDtos;
 using RushHour.Data.Extensions;
 using RushHour.Domain.Abstractions.Repositories;
+using Microsoft.IdentityModel.Tokens;
 
 namespace RushHour.Data.Repositories
 {
@@ -66,7 +67,7 @@ namespace RushHour.Data.Repositories
 
         public async Task DeleteActivityWithManyEmployeesAsync(Guid activityId, List<Guid> employeeIds = null)
         {
-            if(employeeIds is null)
+            if(employeeIds.IsNullOrEmpty())
             {
                 var employeesOfCurrentActivity = await GetAllEmployeesOfActivityAsync(activityId);
 
@@ -94,7 +95,7 @@ namespace RushHour.Data.Repositories
 
             if (activityId != default(Guid))
             {
-                actEmps.Where(ae => ae.ActivityId == activityId);
+                actEmps = actEmps.Where(ae => ae.ActivityId == activityId);
             }
 
             return await actEmps.Select(dto => new ActivityEmployeeDto()

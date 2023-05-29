@@ -1,11 +1,4 @@
-﻿using RushHour.Domain.DTOs.EmployeeDtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace RushHour.Domain.DTOs.ProviderDtos
+﻿namespace RushHour.Domain.DTOs.ProviderDtos
 {
     public class GetProviderDto : BaseDto
     {
@@ -17,10 +10,10 @@ namespace RushHour.Domain.DTOs.ProviderDtos
 
         public string Phone { get; set; }
 
-        public DateTime StartTime { get; set; }
+        public TimeOnly StartTime { get; set; }
 
-        public DateTime EndTime { get; set; }
+        public TimeOnly EndTime { get; set; }
 
-        public int WorkingDays { get; set; }
+        public string WorkingDays { get; set; }
     }
 }

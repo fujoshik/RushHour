@@ -29,7 +29,7 @@ namespace RushHour.API.Controllers
         }
 
         [HttpGet("{id}")]
-        [AuthorizeRoles(Role.Admin, Role.ProviderAdmin)]
+        [AuthorizeRoles(Role.Admin, Role.ProviderAdmin, Role.Client)]
         public async Task<ActionResult<GetProviderDto>> GetProvider([FromRoute] Guid id)
         {
             var provider = await _service.GetByIdAsync(requesterId, id);

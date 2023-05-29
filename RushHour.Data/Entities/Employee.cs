@@ -22,12 +22,10 @@ namespace RushHour.Data.Entities
 
         public Guid ProviderId { get; set; }
 
-        [Required]
         public Provider Provider { get; set; }
 
         public Guid AccountId { get; set; }
 
-        [Required]
         public Account Account { get; set; }
 
         public List<Activity> Activities { get; set; }

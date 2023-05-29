@@ -5,7 +5,7 @@ using RushHour.Domain.DTOs.AccountDtos;
 using RushHour.Domain.DTOs;
 using RushHour.Domain.DTOs.ClientDtos;
 using RushHour.Data.Extensions;
-using System.Linq.Expressions;
+using Microsoft.Identity.Client;
 
 namespace RushHour.Data.Repositories
 {
@@ -55,10 +55,12 @@ namespace RushHour.Data.Repositories
 
             _context.Remove(entity);
 
+            await CascadeDelete(id);
+
             await _context.SaveChangesAsync();
         }
 
-        public async Task<PaginatedResult<GetClientDto>> GetPageAsync(int index, int pageSize, Guid requesterClientId = default(Guid))
+        public async Task<PaginatedResult<GetClientDto>> GetPageAsync(int index, int pageSize, Guid requesterClientId = default(Guid), Guid accountId = default(Guid))
         {
             var clients = Clients.Include(e => e.Account).AsQueryable();
 
@@ -67,7 +69,12 @@ namespace RushHour.Data.Repositories
                 clients = clients.Where(e => e.AccountId == requesterClientId);
             }
 
-            return await Clients.Select(dto => new GetClientDto()
+            if (accountId != Guid.Empty)
+            {
+                clients = clients.Where(e => e.AccountId == accountId);
+            }
+
+            return await clients.Select(dto => new GetClientDto()
             {
                 Id = dto.Id,
                 Phone = dto.Phone,
@@ -121,6 +128,20 @@ namespace RushHour.Data.Repositories
             entity.Address = dto.Address;
 
             await _context.SaveChangesAsync();
+        }
+
+        private async Task CascadeDelete(Guid id)
+        {
+            var client = await _context.Set<Client>().FindAsync(id);
+
+            var account = await _context.Set<Account>().FindAsync(client.AccountId);
+            _context.Set<Account>().Remove(account);
+
+            var appointments = await _context.Set<Appointment>()
+                .Where(a => a.ClientId == id)
+                .ToListAsync();
+
+            appointments.ForEach(a => _context.Set<Appointment>().Remove(a)); ;
         }
     }
 }

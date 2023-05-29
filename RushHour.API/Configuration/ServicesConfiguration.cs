@@ -13,7 +13,9 @@ namespace RushHour.API.Configuration
             builder.Services.AddScoped<IProviderService, ProviderService>();
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
             builder.Services.AddScoped<IClientService, ClientService>();
-            builder.Services.AddScoped<IAuthService, AuthService>();            
+            builder.Services.AddScoped<IAuthService, AuthService>(); 
+            builder.Services.AddScoped<IActivityService, ActivityService>();
+            builder.Services.AddScoped<IAppointmentService, AppointmentService>();
         }
         public static void AddCustomRepositories(this WebApplicationBuilder builder)
         {
@@ -21,6 +23,10 @@ namespace RushHour.API.Configuration
             builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             builder.Services.AddScoped<IAccountRepository, AccountRepository>();
             builder.Services.AddScoped<IClientRepository, ClientRepository>();
+            builder.Services.AddScoped<IActivityRepository, ActivityRepository>();
+            builder.Services.AddScoped<IActivityEmployeeRepository, ActivityEmployeeRepository>();
+            builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+            builder.Services.AddScoped<IProviderWorkingDaysRepository, ProviderWorkingDaysRepository>();
         }
     }
 }
