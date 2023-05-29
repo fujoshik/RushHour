@@ -15,7 +15,6 @@ namespace RushHour.Data.Repositories
         public ProviderRepository(RushHourDbContext context)
         {
             _context = context;
-
             Providers = _context.Set<Provider>();
         }
 
@@ -28,10 +27,9 @@ namespace RushHour.Data.Repositories
                 Website = dto.Website,
                 BusinessDomain = dto.BusinessDomain,
                 Phone = dto.Phone,
-                StartTime = dto.StartTime,
-                EndTime = dto.EndTime,
-                WorkingDays = dto.WorkingDays
-            };            
+                StartTime = DateTime.Parse(dto.StartTime),
+                EndTime = DateTime.Parse(dto.EndTime)
+            };           
 
             Providers.Add(entity);
 
@@ -44,9 +42,8 @@ namespace RushHour.Data.Repositories
                 Website = entity.Website,
                 BusinessDomain = entity.BusinessDomain,
                 Phone = entity.Phone,
-                StartTime = entity.StartTime,
-                EndTime = entity.EndTime,
-                WorkingDays = entity.WorkingDays
+                StartTime = TimeOnly.FromDateTime(entity.StartTime),
+                EndTime = TimeOnly.FromDateTime(entity.EndTime)
             };
         }
 
@@ -61,6 +58,8 @@ namespace RushHour.Data.Repositories
 
             _context.Remove(entity);
 
+            await CascadeDelete(id);
+
             await _context.SaveChangesAsync();
         }
 
@@ -73,9 +72,8 @@ namespace RushHour.Data.Repositories
                 Website = dto.Website,
                 BusinessDomain = dto.BusinessDomain,
                 Phone = dto.Phone,
-                StartTime = dto.StartTime,
-                EndTime = dto.EndTime,
-                WorkingDays = dto.WorkingDays
+                StartTime = TimeOnly.FromDateTime(dto.StartTime),
+                EndTime = TimeOnly.FromDateTime(dto.EndTime)
             }).PaginateAsync(index, pageSize);        
         }
 
@@ -95,9 +93,8 @@ namespace RushHour.Data.Repositories
                 Website = entity.Website,
                 BusinessDomain = entity.BusinessDomain,
                 Phone = entity.Phone,
-                StartTime = entity.StartTime,
-                EndTime = entity.EndTime,
-                WorkingDays = entity.WorkingDays
+                StartTime = TimeOnly.FromDateTime(entity.StartTime),
+                EndTime = TimeOnly.FromDateTime(entity.EndTime)
             };
         }
 
@@ -114,11 +111,73 @@ namespace RushHour.Data.Repositories
             entity.Website = dto.Website;
             entity.BusinessDomain = dto.BusinessDomain;
             entity.Phone = dto.Phone;
-            entity.StartTime = dto.StartTime;
-            entity.EndTime = dto.EndTime;
-            entity.WorkingDays = dto.WorkingDays;
+            entity.StartTime = DateTime.Parse(dto.StartTime);
+            entity.EndTime = DateTime.Parse(dto.EndTime);
 
             await _context.SaveChangesAsync();
+        }
+
+        private async Task CascadeDelete(Guid id)
+        {
+            var employees = await _context.Set<Employee>()
+                .Where(e => e.ProviderId == id)
+                .ToListAsync();
+
+            var activities = await _context.Set<Activity>()
+                .Where(a => a.ProviderId == id)
+                .ToListAsync();
+
+            List<Appointment> appointments = new();
+
+            foreach (var employee in employees)
+            {
+                appointments = await _context.Set<Appointment>()
+                    .Where(a => a.EmployeeId == employee.Id)
+                    .ToListAsync();
+            }
+
+            await DeleteEmployees(employees);
+
+            await DeleteActivities(activities);
+
+            DeleteAppointments(appointments);          
+        }
+
+        private async Task DeleteEmployees(List<Employee> employees)
+        {
+            foreach (var employee in employees)
+            {
+                var actEmp = await _context.Set<ActivityEmployee>()
+                    .Where(ae => ae.EmployeeId == employee.Id)
+                    .ToListAsync();
+
+                actEmp.ForEach(ae => _context.Set<ActivityEmployee>().Remove(ae));
+
+                var account = await _context.Set<Account>().FindAsync(employee.AccountId);
+
+                _context.Set<Account>().Remove(account);
+            }
+
+            employees.ForEach(e => _context.Set<Employee>().Remove(e));
+        }
+
+        private async Task DeleteActivities(List<Activity> activities)
+        {
+            foreach (var activity in activities)
+            {
+                var actEmp = await _context.Set<ActivityEmployee>()
+                    .Where(ae => ae.ActivityId == activity.Id)
+                    .ToListAsync();
+
+                actEmp.ForEach(ae => _context.Set<ActivityEmployee>().Remove(ae));
+            }
+
+            activities.ForEach(a => _context.Set<Activity>().Remove(a));
+        }
+
+        private void DeleteAppointments(List<Appointment> appointments)
+        {
+            appointments.ForEach(a => _context.Set<Appointment>().Remove(a));
         }
     }
 }

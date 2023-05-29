@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RushHour.Data;
 
@@ -11,9 +12,11 @@ using RushHour.Data;
 namespace RushHour.Data.Migrations
 {
     [DbContext(typeof(RushHourDbContext))]
-    partial class RushHourDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230522125136_AddProviderWorkingDaysTable")]
+    partial class AddProviderWorkingDaysTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,10 +53,10 @@ namespace RushHour.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("4c46af00-c008-4500-8a0c-9a380ff2c39b"),
+                            Id = new Guid("5830df6d-ca4d-4f80-9f0b-cdb2b4a206f1"),
                             Email = "admin",
                             FullName = "John Doe",
-                            Password = "$2a$11$qjZKCqyHWclxo03MZoZXr.W9pGsttyLwJbbTHBs3znLgA0vRokn/u",
+                            Password = "$2a$11$8/lJQu2hoJln8Ilp6/9hFeRLtNAPKonUDtYmwV6vXl.8UmiQZLsRi",
                             Role = 0
                         });
                 });
@@ -105,9 +108,6 @@ namespace RushHour.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("ActivityId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("ClientId")
                         .HasColumnType("uniqueidentifier");
 
@@ -122,13 +122,27 @@ namespace RushHour.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ActivityId");
-
                     b.HasIndex("ClientId");
 
-                    b.HasIndex("EmployeeId");
+                    b.HasIndex("EmployeeId")
+                        .IsUnique();
 
                     b.ToTable("Appointments");
+                });
+
+            modelBuilder.Entity("RushHour.Data.Entities.AppointmentActivity", b =>
+                {
+                    b.Property<Guid>("AppointmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ActivityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("AppointmentId", "ActivityId");
+
+                    b.HasIndex("ActivityId");
+
+                    b.ToTable("AppointmentActivities");
                 });
 
             modelBuilder.Entity("RushHour.Data.Entities.Client", b =>
@@ -267,29 +281,36 @@ namespace RushHour.Data.Migrations
 
             modelBuilder.Entity("RushHour.Data.Entities.Appointment", b =>
                 {
-                    b.HasOne("RushHour.Data.Entities.Activity", "Activity")
-                        .WithMany("Appointments")
-                        .HasForeignKey("ActivityId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
                     b.HasOne("RushHour.Data.Entities.Client", "Client")
                         .WithMany()
                         .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("RushHour.Data.Entities.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .WithOne()
+                        .HasForeignKey("RushHour.Data.Entities.Appointment", "EmployeeId")
+                        .OnDelete(DeleteBehavior.ClientCascade)
                         .IsRequired();
-
-                    b.Navigation("Activity");
 
                     b.Navigation("Client");
 
                     b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("RushHour.Data.Entities.AppointmentActivity", b =>
+                {
+                    b.HasOne("RushHour.Data.Entities.Activity", null)
+                        .WithMany()
+                        .HasForeignKey("ActivityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RushHour.Data.Entities.Appointment", null)
+                        .WithMany()
+                        .HasForeignKey("AppointmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RushHour.Data.Entities.Client", b =>
@@ -320,11 +341,6 @@ namespace RushHour.Data.Migrations
                     b.Navigation("Account");
 
                     b.Navigation("Provider");
-                });
-
-            modelBuilder.Entity("RushHour.Data.Entities.Activity", b =>
-                {
-                    b.Navigation("Appointments");
                 });
 
             modelBuilder.Entity("RushHour.Data.Entities.Provider", b =>

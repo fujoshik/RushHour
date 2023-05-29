@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RushHour.Data.Entities
 {
@@ -21,15 +22,15 @@ namespace RushHour.Data.Entities
         public string Phone { get; set; }
 
         [Required]
-        [DataType(DataType.Date)]
+        [DataType(DataType.Time)]
         public DateTime StartTime { get; set; }
 
         [Required]
-        [DataType(DataType.Date)]
+        [DataType(DataType.Time)]
         public DateTime EndTime { get; set; }
 
-        [Required]
-        public int WorkingDays { get; set; }
+        [NotMapped]
+        public List<DayOfWeek> WorkingDays { get; set; }
 
         public List<Employee> Employees { get; set; }
 

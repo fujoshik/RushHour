@@ -79,7 +79,7 @@ namespace RushHour.API.Controllers
 
         [HttpDelete("{id}")]
         [AuthorizeRoles(Role.Admin, Role.ProviderAdmin)]
-        public async Task<IActionResult> DeleteEmployee([FromRoute] Guid id)
+        public async Task<IActionResult> DeleteActivity([FromRoute] Guid id)
         {
             var activity = await _service.GetActivityByIdAsync(requesterId, id);
 

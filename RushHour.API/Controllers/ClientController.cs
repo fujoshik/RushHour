@@ -43,6 +43,7 @@ namespace RushHour.API.Controllers
         }
 
         [HttpPost]
+        [AuthorizeRoles(Role.Admin)]
         public async Task<ActionResult<GetClientDto>> CreateClient([FromBody] CreateClientDto client)
         {
             if (!ModelState.IsValid)
@@ -77,7 +78,8 @@ namespace RushHour.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteEmployee([FromRoute] Guid id)
+        [AuthorizeRoles(Role.Admin)]
+        public async Task<IActionResult> DeleteClient([FromRoute] Guid id)
         {
             var client = await _service.GetClientByIdAsync(requesterId, id);
 

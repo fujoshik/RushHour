@@ -15,9 +15,9 @@ namespace RushHour.Services.Services
 
         public EmployeeService(IEmployeeRepository employeeRepository, IAccountRepository accountRepository, IProviderRepository providerRepository)
         {
-            this._employeeRepository = employeeRepository;
-            this._accountRepository = accountRepository;
-            this._providerRepository = providerRepository;
+            _employeeRepository = employeeRepository;
+            _accountRepository = accountRepository;
+            _providerRepository = providerRepository;
         }
 
         public async Task<GetEmployeeDto> CreateEmployeeAsync(Guid requesterId, CreateEmployeeDto dto)
@@ -26,6 +26,10 @@ namespace RushHour.Services.Services
             {
                 throw new ArgumentNullException(nameof(requesterId));
             }
+
+            var currentAccount = await _accountRepository.GetByIdAsync(requesterId);
+
+            var currentAccountEmployee = await GetEmployeeByAccountAsync(requesterId);
 
             var getEmployee = new GetEmployeeDto()
             {
@@ -36,7 +40,10 @@ namespace RushHour.Services.Services
                 ProviderId = dto.ProviderId
             };
 
-            await CheckProviderAdminIdAndEmployeeId(requesterId, getEmployee);
+            if (currentAccount.Role == Role.ProviderAdmin)
+            {
+                CheckProviderAdminIdAndEmployeeId(currentAccountEmployee, getEmployee);
+            }                
 
             var provider = await _providerRepository.GetByIdAsync(dto.ProviderId);
 
@@ -106,9 +113,11 @@ namespace RushHour.Services.Services
 
             var currentAccount = await _accountRepository.GetByIdAsync(requesterId);
 
+            var currentAccountEmployee = await GetEmployeeByAccountAsync(requesterId);
+
             if(currentAccount.Role == Role.ProviderAdmin)
             {
-                return await _employeeRepository.GetPageAsync(index, pageSize,requesterId);
+                return await _employeeRepository.GetPageAsync(index, pageSize, currentAccountEmployee.ProviderId);
             }
 
             return await _employeeRepository.GetPageAsync(index, pageSize);
@@ -121,16 +130,23 @@ namespace RushHour.Services.Services
                 throw new ArgumentNullException(nameof(requesterId));
             }
 
-            var employee = await _employeeRepository.GetByIdAsync(id);
+            var currentAccount = await _accountRepository.GetByIdAsync(requesterId);
 
-            await CheckProviderAdminIdAndEmployeeId(requesterId, employee);
+            var currentAccountEmployee = await GetEmployeeByAccountAsync(requesterId);
 
-            if (!await CheckEmployeeId(requesterId))
+            var employeeToRead = await _employeeRepository.GetByIdAsync(id);
+
+            if (currentAccount.Role == Role.ProviderAdmin)
+            {
+                CheckProviderAdminIdAndEmployeeId(currentAccountEmployee, employeeToRead);
+            }
+
+            else if(currentAccount.Role == Role.Employee && employeeToRead.AccountId != requesterId)
             {
                 throw new UnauthorizedAccessException("Can't access a different employee");
             }
 
-            return employee;
+            return employeeToRead;
         }
 
         private async Task<GetAccountDto> GetAccountByIdAsync(Guid id)
@@ -148,15 +164,25 @@ namespace RushHour.Services.Services
 
         public async Task UpdateEmployeeAsync(Guid id, CreateEmployeeDto dto, Guid requesterId)
         {
-            await UpdateAccountAsync(id, dto.Account, requesterId);
+            var currentAccount = await _accountRepository.GetByIdAsync(requesterId);
+
+            var oldEmployee = await _employeeRepository.GetByIdAsync(id);
+
+            await UpdateAccountAsync(id, dto.Account, currentAccount);
+
+            if(currentAccount.Role == Role.Employee)
+            {
+                if(dto.ProviderId != oldEmployee.ProviderId)
+                {
+                    throw new ArgumentException("Can't change employee Provider Id!");
+                }
+            }
 
             await _employeeRepository.UpdateAsync(id, dto);
         }
 
-        private async Task UpdateAccountAsync(Guid employeeId, CreateAccountDto account, Guid requesterId)
+        private async Task UpdateAccountAsync(Guid employeeId, CreateAccountDto account, AccountDto currentAccount)
         {
-            var currentAccount = await _accountRepository.GetByIdAsync(requesterId);
-
             var getAccountDto = new GetAccountDto()
             {
                 Id = currentAccount.Id,
@@ -165,10 +191,12 @@ namespace RushHour.Services.Services
                 Role = currentAccount.Role
             };
 
-            if (account.Role != Role.ProviderAdmin || account.Role != Role.Employee)
+            if (account.Role != Role.ProviderAdmin && account.Role != Role.Employee)
             {
                 throw new ArgumentException("Employee can only be of role ProviderAdmin or Employee!");
             }
+
+            var employee = await _employeeRepository.GetByIdAsync(employeeId);
 
             if (currentAccount.Role == Role.Admin)
             {
@@ -177,17 +205,15 @@ namespace RushHour.Services.Services
 
             else if(currentAccount.Role == Role.ProviderAdmin)
             {
-                await ProviderAdminUpdateAccountAsync(employeeId, account, getAccountDto);
+                await ProviderAdminUpdateAccountAsync(employee, account, getAccountDto, employee.AccountId);
             }
 
             else if(currentAccount.Role == Role.Employee)
             {
-                var employee = await _employeeRepository.GetByIdAsync(employeeId);
-
                 if (employee.AccountId != currentAccount.Id)
                 {
                     throw new UnauthorizedAccessException("Can't access a different employee");
-                }        
+                }
 
                 await _accountRepository.UpdateAsync(employee.AccountId, account);
             }
@@ -200,10 +226,8 @@ namespace RushHour.Services.Services
             await _accountRepository.UpdateAsync(employee.AccountId, dto);
         }
 
-        private async Task ProviderAdminUpdateAccountAsync(Guid accountToChangeId, CreateAccountDto accountToChange, GetAccountDto currentAccount)
+        private async Task ProviderAdminUpdateAccountAsync(GetEmployeeDto employeeToChange, CreateAccountDto accountToChange, GetAccountDto currentAccount, Guid accountToChangeId)
         {
-            var employeeToChange = await GetEmployeeByAccountAsync(accountToChangeId);
-
             var currentEmployee = await GetEmployeeByAccountAsync(currentAccount.Id);
 
             if (employeeToChange.ProviderId != currentEmployee.ProviderId)
@@ -216,24 +240,17 @@ namespace RushHour.Services.Services
 
         public async Task<GetEmployeeDto> GetEmployeeByAccountAsync(Guid id)
         {
-            var employees = await _employeeRepository.GetPageAsync(1, 10);
+            var employees = await _employeeRepository.GetPageAsync(1, 10, Guid.Empty, id);
 
-            return employees.Result.Where(e => e.Account.Id == id).FirstOrDefault();
+            return employees.Result.FirstOrDefault();
         }
 
-        private async Task CheckProviderAdminIdAndEmployeeId(Guid requesterId, GetEmployeeDto dto)
+        private void CheckProviderAdminIdAndEmployeeId(GetEmployeeDto currentAccountEmployee, GetEmployeeDto employeeDto)
         {
-            var currentAccount = await _accountRepository.GetByIdAsync(requesterId);
-
-            if (currentAccount.Role == Role.ProviderAdmin && dto.ProviderId != currentAccount.Id)
+            if (employeeDto.ProviderId != currentAccountEmployee.ProviderId)
             {
                 throw new UnauthorizedAccessException("Can't access an employee with different provider");
             }
-        }
-
-        private async Task<bool> CheckEmployeeId(Guid requesterId)
-        {
-            return await _accountRepository.CheckIfAnyMatchesIdAndRole(requesterId, Role.Employee);
         }
     }
 }

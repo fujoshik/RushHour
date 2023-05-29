@@ -14,8 +14,8 @@ namespace RushHour.Services.Services
 
         public ClientService(IClientRepository clientRepository, IAccountRepository accountRepository)
         {
-            this._clientRepository = clientRepository;
-            this._accountRepository = accountRepository;
+            _clientRepository = clientRepository;
+            _accountRepository = accountRepository;
         }
 
         public async Task<GetClientDto> CreateClientAsync(CreateClientDto dto)
@@ -85,9 +85,12 @@ namespace RushHour.Services.Services
 
             var client = await _clientRepository.GetByIdAsync(id);
 
-            if(!await CheckClientId(requesterId))
+            if(!await CheckRequesterIdAndRole(requesterId, Role.Admin) )
             {
-                throw new UnauthorizedAccessException("Can't access a different client");
+                if (client.AccountId != requesterId)
+                {
+                    throw new UnauthorizedAccessException("Can't access a different");
+                }
             }
 
             return client;
@@ -166,9 +169,16 @@ namespace RushHour.Services.Services
             await _accountRepository.UpdateAsync(client.AccountId, createAccount);
         }
 
-        private async Task<bool> CheckClientId(Guid requesterId)
+        public async Task<GetClientDto> GetClientByAccountAsync(Guid id)
         {
-            return await _accountRepository.CheckIfAnyMatchesIdAndRole(requesterId, Role.Client);
+            var clients = await _clientRepository.GetPageAsync(1, 10, Guid.Empty, id);
+
+            return clients.Result.FirstOrDefault();
+        }
+
+        private async Task<bool> CheckRequesterIdAndRole(Guid requesterId, Role role)
+        {
+            return await _accountRepository.CheckIfAnyMatchesIdAndRole(requesterId, role);
         }
     }
 }
