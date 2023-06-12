@@ -11,11 +11,14 @@ namespace RushHour.Services.Services
     {
         private readonly IClientRepository _clientRepository;
         private readonly IAccountRepository _accountRepository;
+        private readonly IAccountService _accountService;
 
-        public ClientService(IClientRepository clientRepository, IAccountRepository accountRepository)
+        public ClientService(IClientRepository clientRepository, IAccountRepository accountRepository, 
+            IAccountService accountService)
         {
             _clientRepository = clientRepository;
             _accountRepository = accountRepository;
+            _accountService = accountService;
         }
 
         public async Task<GetClientDto> CreateClientAsync(CreateClientDto dto)
@@ -46,9 +49,11 @@ namespace RushHour.Services.Services
                 throw new ArgumentException("Can't assign a client to be Employee!");
             }
 
-            dto.Password = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+            var salt = _accountService.GenerateSalt();
 
-            var account = await _accountRepository.CreateAsync(dto);
+            dto.Password = _accountService.HashPasword(dto.Password, salt);
+
+            var account = await _accountRepository.CreateAsync(dto, salt);
 
             return new GetAccountDto()
             {

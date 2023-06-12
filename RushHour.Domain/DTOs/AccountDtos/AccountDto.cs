@@ -10,6 +10,8 @@ namespace RushHour.Domain.DTOs.AccountDtos
 
         public string Password { get; set; }
 
+        public string Salt { get; set; }
+
         public Role Role { get; set; }
     }
 }

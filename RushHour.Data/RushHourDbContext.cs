@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RushHour.Data.Entities;
 using RushHour.Domain.Enums;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace RushHour.Data
 {
@@ -22,8 +24,16 @@ namespace RushHour.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            var salt = GenerateSalt();
+
             modelBuilder.Entity<Account>().HasData(
-                new Account { Id = Guid.NewGuid(), Email = "admin", FullName = "John Doe", Password = HashAdminPassword(), Role = Role.Admin });
+                new Account { 
+                    Id = Guid.Parse("c78e50a0-d5b7-44ec-b047-a6693449e8d2"), 
+                    Email = "admin", 
+                    FullName = "John Doe", 
+                    Password = HashAdminPassword("Password123+", salt),
+                    Salt = Convert.ToBase64String(salt),
+                    Role = Role.Admin });
 
             modelBuilder.Entity<Provider>()
                 .HasMany(p => p.Activities)
@@ -64,9 +74,20 @@ namespace RushHour.Data
                 .OnDelete(DeleteBehavior.NoAction);
         }
 
-        private string HashAdminPassword()
+        private string HashAdminPassword(string password, byte[] salt)
         {
-            return BCrypt.Net.BCrypt.HashPassword("Password123+");
+            var hash = Rfc2898DeriveBytes.Pbkdf2(
+                Encoding.UTF8.GetBytes(password),
+                salt,
+                350000,
+                HashAlgorithmName.SHA512,
+                64);
+
+            return Convert.ToHexString(hash);
+        }
+        private byte[] GenerateSalt()
+        {
+            return RandomNumberGenerator.GetBytes(64);
         }
     }
 }

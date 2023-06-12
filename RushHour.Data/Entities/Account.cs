@@ -17,6 +17,9 @@ namespace RushHour.Data.Entities
         public string Password { get; set; }
 
         [Required]
+        public string Salt { get; set; }
+
+        [Required]
         public Role Role { get; set; }
     }
 }

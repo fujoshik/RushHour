@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using RushHour.API.Configuration;
 using RushHour.Data;
 using RushHour.Domain.Infrastructure;
+using RushHour.Domain.Middleware;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -89,6 +90,8 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 app.MapControllers();
 

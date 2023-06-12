@@ -12,25 +12,28 @@ namespace RushHour.Services.Services
     public class AuthService : IAuthService
     {
         private readonly IAccountRepository _repository;
+        private readonly IAccountService _service;
         private readonly JwtSettings _settings;
 
-        public AuthService(IAccountRepository repository, JwtSettings settings)
+        public AuthService(IAccountRepository repository, JwtSettings settings, IAccountService service)
         {
             _repository = repository;
             _settings = settings;
+            _service = service;
         }
 
         public async Task RegisterAsync(CreateAccountDto accountDto)
         {
-            accountDto.Password = BCrypt.Net.BCrypt.HashPassword(accountDto.Password);
+            var salt = _service.GenerateSalt();
 
-            await _repository.CreateAsync(accountDto);
+            accountDto.Password = _service.HashPasword(accountDto.Password, salt);
+
+            await _repository.CreateAsync(accountDto, salt);
         }
 
         public async Task<string> LoginAsync(string email, string password)
         {
-            var allUsers = await _repository.GetPageAsync(1, 10);
-            var users = allUsers.Result.Where(u => u.Email == email).ToList();
+            var users = await _repository.GetUsersByEmail(email);
 
             if (users == null || users.Count == 0)
             {
@@ -39,12 +42,13 @@ namespace RushHour.Services.Services
 
             var user = users.FirstOrDefault();
 
-            if (!BCrypt.Net.BCrypt.Verify(password, user.Password))
+            if (!_service.VerifyPassword(password, user.Password, Convert.FromBase64String(user.Salt)))
             {
                 return null;
             }
 
             var token = GenerateJwtToken(user);
+
             return token;
         }
 
