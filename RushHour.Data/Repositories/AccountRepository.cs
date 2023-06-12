@@ -20,7 +20,7 @@ namespace RushHour.Data.Repositories
             Accounts = _context.Set<Account>();
         }
 
-        public async Task<AccountDto> CreateAsync(CreateAccountDto dto)
+        public async Task<AccountDto> CreateAsync(CreateAccountDto dto, byte[] salt)
         {
             Account entity = new()
             {
@@ -28,6 +28,7 @@ namespace RushHour.Data.Repositories
                 Email = dto.Email,
                 FullName = dto.FullName,
                 Password = dto.Password,
+                Salt = Convert.ToBase64String(salt),
                 Role = dto.Role
             };
 
@@ -41,6 +42,7 @@ namespace RushHour.Data.Repositories
                 Email = entity.Email,
                 FullName = entity.FullName,
                 Password = entity.Password,
+                Salt = entity.Salt,
                 Role = entity.Role
             };
         }
@@ -53,6 +55,7 @@ namespace RushHour.Data.Repositories
                 Email = dto.Email,
                 FullName = dto.FullName,
                 Password = dto.Password,
+                Salt = dto.Salt,
                 Role = dto.Role
             }).PaginateAsync(index, pageSize);
         }
@@ -72,6 +75,7 @@ namespace RushHour.Data.Repositories
                 Email = entity.Email,
                 FullName = entity.FullName,
                 Password = entity.Password,
+                Salt = entity.Salt,
                 Role = entity.Role
             };
         }
@@ -109,6 +113,21 @@ namespace RushHour.Data.Repositories
         public async Task<bool> CheckIfAnyMatchesIdAndRole(Guid id, Role role)
         {
             return await Accounts.AnyAsync(a => a.Id == id && a.Role == role);
+        }
+
+        public async Task<List<AccountDto>> GetUsersByEmail(string email)
+        {
+            return await Accounts
+                .Where(a => a.Email == email)
+                .Select(dto => new AccountDto()
+            {
+                Id = dto.Id,
+                Email = dto.Email,
+                FullName = dto.FullName,
+                Password = dto.Password,
+                Salt = dto.Salt,
+                Role = dto.Role
+            }).ToListAsync();
         }
     }
 }

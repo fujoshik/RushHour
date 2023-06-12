@@ -1,6 +1,7 @@
 ﻿using RushHour.Data.Repositories;
 using RushHour.Domain.Abstractions.Repositories;
 using RushHour.Domain.Abstractions.Services;
+using RushHour.Domain.Middleware;
 using RushHour.Services.Services;
 
 namespace RushHour.API.Configuration
@@ -16,6 +17,8 @@ namespace RushHour.API.Configuration
             builder.Services.AddScoped<IAuthService, AuthService>(); 
             builder.Services.AddScoped<IActivityService, ActivityService>();
             builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+            builder.Services.AddScoped<IAccountService, AccountService>();
+            builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
         }
         public static void AddCustomRepositories(this WebApplicationBuilder builder)
         {

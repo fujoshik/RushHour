@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RushHour.Domain.Abstractions.Services;
 using RushHour.Domain.DTOs;
-using RushHour.Domain.DTOs.AccountDtos;
+using RushHour.Domain.DTOs.AuthDtos;
 
 namespace RushHour.API.Controllers
 {
@@ -19,7 +19,7 @@ namespace RushHour.API.Controllers
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> LoginAsync(AuthDto authDto)
+        public async Task<ActionResult<Token>> LoginAsync(AuthDto authDto)
         {
             var token = await _service.LoginAsync(authDto.Email, authDto.Password);
 
@@ -28,7 +28,7 @@ namespace RushHour.API.Controllers
                 return Unauthorized();
             }
 
-            return Ok(token);
+            return new Token { Jwt = token };
         }
     }
 }
