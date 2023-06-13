@@ -169,6 +169,11 @@ namespace RushHour.Services.Services
 
         public async Task UpdateEmployeeAsync(Guid id, CreateEmployeeDto dto, Guid requesterId)
         {
+            if (requesterId == default(Guid))
+            {
+                throw new ArgumentNullException(nameof(requesterId));
+            }
+
             var currentAccount = await _accountRepository.GetByIdAsync(requesterId);
 
             var oldEmployee = await _employeeRepository.GetByIdAsync(id);

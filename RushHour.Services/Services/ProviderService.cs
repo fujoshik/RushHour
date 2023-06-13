@@ -80,6 +80,11 @@ namespace RushHour.Services.Services
 
         public async Task UpdateAsync(Guid requesterId, Guid id, CreateProviderDto dto)
         {
+            if (requesterId == default(Guid))
+            {
+                throw new ArgumentNullException(nameof(requesterId));
+            }
+
             var provider = new GetProviderDto()
             {
                 Id = id,

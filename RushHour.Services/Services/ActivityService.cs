@@ -117,6 +117,11 @@ namespace RushHour.Services.Services
 
         public async Task UpdateActivityAsync(Guid id, CreateActivityDto dto, Guid requesterAccountId)
         {
+            if (requesterAccountId == default(Guid))
+            {
+                throw new ArgumentNullException(nameof(requesterAccountId));
+            }
+
             await CheckEmployeesProviderIdAndActivityProviderId(dto.ProviderId, dto.EmployeeIds);
 
             var newActivityDto = new GetActivityDto()

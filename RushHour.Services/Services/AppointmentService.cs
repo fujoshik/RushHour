@@ -119,6 +119,13 @@ namespace RushHour.Services.Services
 
         public async Task UpdateAppointmentAsync(Guid id, CreateAppointmentDto dto, Guid requesterAccountId)
         {
+            var appointment = await _appointmentRepository.GetByIdAsync(id);
+
+            if(appointment is null || id == default(Guid))
+            {
+                throw new KeyNotFoundException($"No such {typeof(GetAppointmentDto)} with id: {id}");
+            }
+
             var newAppointmentDto = new GetAppointmentDto()
             {
                 Id = id,
