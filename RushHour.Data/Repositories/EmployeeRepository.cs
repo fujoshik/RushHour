@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using RushHour.Data.Entities;
 using RushHour.Data.Extensions;
 using RushHour.Domain.Abstractions.Repositories;
@@ -12,42 +13,31 @@ namespace RushHour.Data.Repositories
     {
         protected RushHourDbContext _context;
         protected DbSet<Employee> Employees { get; }
+        private readonly IMapper _mapper;
 
-        public EmployeeRepository(RushHourDbContext context)
+        public EmployeeRepository(RushHourDbContext context, IMapper mapper)
         {
             _context = context;
-
+            _mapper = mapper;
             Employees = _context.Set<Employee>();
         }
 
         public async Task<GetEmployeeDto> CreateAsync(GetAccountDto account, CreateEmployeeDto employee)
         {
-            Employee entity = new()
-            {
-                Id = Guid.NewGuid(),
-                Title = employee.Title,
-                Phone = employee.Phone,
-                RatePerHour = employee.RatePerHour,
-                HireDate = employee.HireDate,
-                ProviderId = employee.ProviderId,
-                AccountId = account.Id
-            };
+            Employee entity = _mapper.Map<Employee>(employee);
+
+            entity.Id = Guid.NewGuid();
+            entity.AccountId = account.Id;
+            entity.Account = null;
 
             Employees.Add(entity);
 
             await _context.SaveChangesAsync();
 
-            return new GetEmployeeDto()
-            {
-                Id = entity.Id,
-                Title = entity.Title,
-                Phone = entity.Phone,
-                RatePerHour = entity.RatePerHour,
-                HireDate = entity.HireDate,
-                ProviderId = entity.ProviderId,
-                AccountId = entity.AccountId,
-                Account = account
-            };
+            var mapped = _mapper.Map<GetEmployeeDto>(entity);
+            mapped.Account = account;
+
+            return mapped;
         }
 
         public async Task DeleteAsync(Guid id)
@@ -68,7 +58,8 @@ namespace RushHour.Data.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<PaginatedResult<GetEmployeeDto>> GetPageAsync(int index, int pageSize, Guid requesterProviderId = default(Guid), Guid accountId = default(Guid))
+        public async Task<PaginatedResult<GetEmployeeDto>> GetPageAsync(
+            int index, int pageSize, Guid requesterProviderId = default(Guid), Guid accountId = default(Guid))
         {
             var employees = Employees.Include(e => e.Account).AsQueryable();
 
@@ -81,24 +72,10 @@ namespace RushHour.Data.Repositories
             {
                 employees = employees.Where(e => e.AccountId == accountId);
             }
-            
-            return await employees.Select(dto => new GetEmployeeDto()
-            {
-                Id = dto.Id,
-                Title = dto.Title,
-                Phone = dto.Phone,
-                RatePerHour = dto.RatePerHour,
-                HireDate = dto.HireDate,
-                ProviderId = dto.ProviderId,
-                AccountId = dto.AccountId,
-                Account = new GetAccountDto()
-                {
-                    Id = dto.Account.Id,
-                    FullName = dto.Account.FullName,
-                    Email = dto.Account.Email,
-                    Role = dto.Account.Role
-                }
-            }).PaginateAsync(index, pageSize);
+
+            var mapped = _mapper.ProjectTo<GetEmployeeDto>(employees);
+
+            return await mapped.PaginateAsync(index, pageSize);
         }
 
         public async Task<GetEmployeeDto> GetByIdAsync(Guid id)
@@ -112,23 +89,7 @@ namespace RushHour.Data.Repositories
                 throw new KeyNotFoundException($"No such {typeof(Employee)} with id: {id}");
             }
 
-            return new GetEmployeeDto()
-            {
-                Id = entity.Id,
-                Title = entity.Title,
-                Phone = entity.Phone,
-                RatePerHour = entity.RatePerHour,
-                HireDate = entity.HireDate,
-                ProviderId = entity.ProviderId,
-                AccountId = entity.AccountId,
-                Account = new GetAccountDto()
-                {
-                    Id = entity.Account.Id,
-                    FullName = entity.Account.FullName,
-                    Email = entity.Account.Email,
-                    Role = entity.Account.Role
-                }
-            };
+            return _mapper.Map<GetEmployeeDto>(entity);
         }
 
         public async Task UpdateAsync(Guid id, CreateEmployeeDto dto)
@@ -140,11 +101,13 @@ namespace RushHour.Data.Repositories
                 throw new KeyNotFoundException($"No such {typeof(Employee)} with id: {id}");
             }
 
-            entity.Title = dto.Title;
-            entity.Phone = dto.Phone;
-            entity.RatePerHour = dto.RatePerHour;
-            entity.HireDate = dto.HireDate;
-            entity.ProviderId = dto.ProviderId;
+            var mapped = _mapper.Map<Employee>(dto);
+            mapped.Id = entity.Id;
+            mapped.AccountId = entity.AccountId;
+            
+            _context.Entry(entity).CurrentValues.SetValues(mapped);
+
+            _context.Entry(entity).State = EntityState.Modified;
 
             await _context.SaveChangesAsync();
         }

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using RushHour.Data.Entities;
 using RushHour.Data.Extensions;
 using RushHour.Domain.Abstractions.Repositories;
@@ -12,52 +13,35 @@ namespace RushHour.Data.Repositories
     {
         protected RushHourDbContext _context;
         protected DbSet<Account> Accounts { get; }
+        private readonly IMapper _mapper;
 
-        public AccountRepository(RushHourDbContext context)
+        public AccountRepository(RushHourDbContext context, IMapper mapper)
         {
             _context = context;
-
+            _mapper = mapper;
             Accounts = _context.Set<Account>();
         }
 
         public async Task<AccountDto> CreateAsync(CreateAccountDto dto, byte[] salt)
         {
-            Account entity = new()
-            {
-                Id = Guid.NewGuid(),
-                Email = dto.Email,
-                FullName = dto.FullName,
-                Password = dto.Password,
-                Salt = Convert.ToBase64String(salt),
-                Role = dto.Role
-            };
+            Account entity = _mapper.Map<Account>(dto);
+            entity.Id = Guid.NewGuid();
+            entity.Salt = Convert.ToBase64String(salt);
 
             Accounts.Add(entity);
 
             await _context.SaveChangesAsync();
 
-            return new AccountDto()
-            {
-                Id = entity.Id,
-                Email = entity.Email,
-                FullName = entity.FullName,
-                Password = entity.Password,
-                Salt = entity.Salt,
-                Role = entity.Role
-            };
+            var mapped = _mapper.Map<AccountDto>(entity);
+
+            return mapped;
         }
 
         public async Task<PaginatedResult<AccountDto>> GetPageAsync(int index, int pageSize)
         {
-            return await Accounts.Select(dto => new AccountDto()
-            {
-                Id = dto.Id,
-                Email = dto.Email,
-                FullName = dto.FullName,
-                Password = dto.Password,
-                Salt = dto.Salt,
-                Role = dto.Role
-            }).PaginateAsync(index, pageSize);
+            var mapped = _mapper.ProjectTo<AccountDto>(Accounts.AsQueryable());
+
+            return await mapped.PaginateAsync(index, pageSize);
         }
 
         public async Task<AccountDto> GetByIdAsync(Guid id)
@@ -69,15 +53,7 @@ namespace RushHour.Data.Repositories
                 throw new KeyNotFoundException($"No such {typeof(Account)} with id: {id}");
             }
 
-            return new AccountDto()
-            {
-                Id = entity.Id,
-                Email = entity.Email,
-                FullName = entity.FullName,
-                Password = entity.Password,
-                Salt = entity.Salt,
-                Role = entity.Role
-            };
+            return _mapper.Map<AccountDto>(entity);
         }
 
         public async Task UpdateAsync(Guid id, CreateAccountDto dto)
@@ -89,9 +65,14 @@ namespace RushHour.Data.Repositories
                 throw new KeyNotFoundException($"No such {typeof(Account)} with id: {id}");
             }
 
-            entity.Email = dto.Email;
-            entity.FullName = dto.FullName;
-            entity.Role = dto.Role;
+            var mapped = _mapper.Map<Account>(dto);
+            mapped.Id = entity.Id;
+            mapped.Password = entity.Password;
+            mapped.Salt = entity.Salt;
+
+            _context.Entry(entity).CurrentValues.SetValues(mapped);
+
+            _context.Entry(entity).State = EntityState.Modified;
 
             await _context.SaveChangesAsync();
         }
@@ -107,6 +88,11 @@ namespace RushHour.Data.Repositories
 
             _context.Remove(entity);
 
+            if(entity.Role == Role.Employee || entity.Role == Role.ProviderAdmin)
+            {
+                await CascadeDelete(id);
+            }           
+
             await _context.SaveChangesAsync();
         }
 
@@ -117,17 +103,37 @@ namespace RushHour.Data.Repositories
 
         public async Task<List<AccountDto>> GetUsersByEmail(string email)
         {
-            return await Accounts
-                .Where(a => a.Email == email)
-                .Select(dto => new AccountDto()
-            {
-                Id = dto.Id,
-                Email = dto.Email,
-                FullName = dto.FullName,
-                Password = dto.Password,
-                Salt = dto.Salt,
-                Role = dto.Role
-            }).ToListAsync();
+            return await _mapper
+                .ProjectTo<AccountDto>(Accounts.Where(a => a.Email == email))
+                .ToListAsync();
         }
-    }
+        
+        private async Task CascadeDelete(Guid id)
+        {
+            var employee = _context.Set<Employee>().FirstOrDefault(e => e.AccountId == id);
+            
+            var appointments = await _context.Set<Appointment>()
+                .Where(a => a.EmployeeId == employee.Id)
+                .ToListAsync();
+            
+            var actEmps = await _context.Set<ActivityEmployee>()
+                .Where(ae => ae.EmployeeId == employee.Id)
+                .ToListAsync();
+            
+            foreach (var actEmp in actEmps)
+            {
+                var employeeToRemove = await _context.Set<Employee>().FindAsync(actEmp.EmployeeId);
+                
+                var activity = await _context.Set<Activity>().FindAsync(actEmp.ActivityId);
+                
+                activity.Employees.Remove(employeeToRemove);
+            }
+            
+            appointments.ForEach(a => _context.Set<Appointment>().Remove(a));
+            
+            actEmps.ForEach(ae => _context.Set<ActivityEmployee>().Remove(ae));
+            
+            _context.Set<Employee>().Remove(employee);
+        }
+	}
 }

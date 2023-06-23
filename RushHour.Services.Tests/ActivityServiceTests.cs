@@ -8,7 +8,7 @@ using RushHour.Services.Services;
 using RushHour.Domain.DTOs.ActivityDtos;
 using RushHour.Domain.DTOs.EmployeeDtos;
 using RushHour.Domain.DTOs.ActivityEmployeeDtos;
-using System;
+using AutoMapper;
 
 namespace RushHour.Services.Tests
 {
@@ -20,14 +20,16 @@ namespace RushHour.Services.Tests
         public Mock<IEmployeeService> employeeServiceMock;
         public Mock<IEmployeeRepository> employeeRepoMock;
         public Mock<IActivityEmployeeRepository> activityEmployeeRepoMock;
+        public Mock<IMapper> mapperMock;
 
-        public ActivityServiceTests() 
+		public ActivityServiceTests() 
         {
             activityRepoMock = new Mock<IActivityRepository>();
             accountRepoMock = new Mock<IAccountRepository>();
             employeeServiceMock = new Mock<IEmployeeService>();
             employeeRepoMock = new Mock<IEmployeeRepository>();
             activityEmployeeRepoMock = new Mock<IActivityEmployeeRepository>();
+            mapperMock = new Mock<IMapper>();
 
             activityRepoMock
                 .Setup(s => s.CreateAsync(It.IsAny<CreateActivityDto>()))
@@ -53,7 +55,7 @@ namespace RushHour.Services.Tests
                 .ReturnsAsync(new List<ActivityEmployeeDto>());
 
             service = new ActivityService(activityRepoMock.Object, accountRepoMock.Object,
-                null, activityEmployeeRepoMock.Object, null);
+                null, activityEmployeeRepoMock.Object, null, null);
         }
 
         [Fact]
@@ -90,8 +92,13 @@ namespace RushHour.Services.Tests
                 .Setup(s => s.GetEmployeeByAccountAsync(It.IsAny<Guid>()))
                 .ReturnsAsync(employee);
 
+            mapperMock
+                .Setup(s => s.Map<GetActivityDto>(It.IsAny<CreateActivityDto>()))
+                .Returns(new GetActivityDto() { ProviderId = dto.ProviderId, EmployeeIds = dto.EmployeeIds});
+
             service = new ActivityService(activityRepoMock.Object, accountRepoMock.Object,
-                employeeServiceMock.Object, activityEmployeeRepoMock.Object, employeeRepoMock.Object);
+                employeeServiceMock.Object, activityEmployeeRepoMock.Object, 
+                employeeRepoMock.Object, mapperMock.Object);
 
             //Act
             var result = await service.CreateActivityAsync(requesterId, dto);
@@ -152,7 +159,7 @@ namespace RushHour.Services.Tests
                 .ReturnsAsync(employee);
 
             service = new ActivityService(activityRepoMock.Object, accountRepoMock.Object,
-                employeeServiceMock.Object, activityEmployeeRepoMock.Object, null);
+                employeeServiceMock.Object, activityEmployeeRepoMock.Object, null, null);
 
             // Act
             var result = await service.GetActivityByIdAsync(requesterId, activityId);

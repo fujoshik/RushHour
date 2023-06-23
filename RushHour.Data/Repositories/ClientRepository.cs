@@ -5,7 +5,7 @@ using RushHour.Domain.DTOs.AccountDtos;
 using RushHour.Domain.DTOs;
 using RushHour.Domain.DTOs.ClientDtos;
 using RushHour.Data.Extensions;
-using Microsoft.Identity.Client;
+using AutoMapper;
 
 namespace RushHour.Data.Repositories
 {
@@ -13,35 +13,31 @@ namespace RushHour.Data.Repositories
     {
         protected RushHourDbContext _context;
         protected DbSet<Client> Clients { get; }
+        private readonly IMapper _mapper;
 
-        public ClientRepository(RushHourDbContext context)
+        public ClientRepository(RushHourDbContext context, IMapper mapper)
         {
             _context = context;
-
+            _mapper = mapper;
             Clients = _context.Set<Client>();
         }
 
         public async Task<GetClientDto> CreateAsync(GetAccountDto account, CreateClientDto client)
         {
-            Client entity = new()
-            {
-                Id = Guid.NewGuid(),
-                Phone = client.Phone,
-                Address = client.Address,
-                AccountId = account.Id
-            };
+            Client entity = _mapper.Map<Client>(client);
+
+            entity.Id = Guid.NewGuid();
+            entity.AccountId = account.Id;
+            entity.Account = null;
 
             Clients.Add(entity);
 
             await _context.SaveChangesAsync();
 
-            return new GetClientDto()
-            {
-                Id = entity.Id,
-                Phone = entity.Phone,
-                Address = entity.Address,
-                AccountId = entity.AccountId
-            };
+            var mapped = _mapper.Map<GetClientDto>(entity);
+            mapped.Account = account;
+
+            return mapped;
         }
 
         public async Task DeleteAsync(Guid id)
@@ -74,20 +70,9 @@ namespace RushHour.Data.Repositories
                 clients = clients.Where(e => e.AccountId == accountId);
             }
 
-            return await clients.Select(dto => new GetClientDto()
-            {
-                Id = dto.Id,
-                Phone = dto.Phone,
-                Address = dto.Address,
-                AccountId = dto.AccountId,
-                Account = new GetAccountDto()
-                {
-                    Id = dto.Account.Id,
-                    FullName = dto.Account.FullName,
-                    Email = dto.Account.Email,
-                    Role = dto.Account.Role
-                }
-            }).PaginateAsync(index, pageSize);
+            var mapped = _mapper.ProjectTo<GetClientDto>(clients);
+
+            return await mapped.PaginateAsync(index, pageSize);
         }
 
         public async Task<GetClientDto> GetByIdAsync(Guid id)
@@ -99,20 +84,7 @@ namespace RushHour.Data.Repositories
                 throw new KeyNotFoundException($"No such {typeof(Client)} with id: {id}");
             }
 
-            return new GetClientDto()
-            {
-                Id = entity.Id,
-                Phone = entity.Phone,
-                Address = entity.Address,
-                AccountId = entity.AccountId,
-                Account = new GetAccountDto()
-                {
-                    Id = entity.Account.Id,
-                    FullName = entity.Account.FullName,
-                    Email = entity.Account.Email,
-                    Role = entity.Account.Role
-                }
-            };
+            return _mapper.Map<GetClientDto>(entity);
         }
 
         public async Task UpdateAsync(Guid id, UpdateClientDto dto)
@@ -124,8 +96,13 @@ namespace RushHour.Data.Repositories
                 throw new KeyNotFoundException($"No such {typeof(Client)} with id: {id}");
             }
 
-            entity.Phone = dto.Phone;
-            entity.Address = dto.Address;
+            var mapped = _mapper.Map<Client>(dto);
+            mapped.Id = entity.Id;
+            mapped.AccountId = entity.AccountId;
+
+            _context.Entry(entity).CurrentValues.SetValues(mapped);
+
+            _context.Entry(entity).State = EntityState.Modified;
 
             await _context.SaveChangesAsync();
         }

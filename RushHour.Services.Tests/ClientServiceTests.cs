@@ -6,6 +6,7 @@ using RushHour.Domain.DTOs;
 using RushHour.Services.Services;
 using RushHour.Domain.DTOs.ClientDtos;
 using RushHour.Domain.Enums;
+using AutoMapper;
 
 namespace RushHour.Services.Tests
 {
@@ -15,11 +16,14 @@ namespace RushHour.Services.Tests
         public Mock<IClientRepository> clientRepoMock;
         public Mock<IAccountRepository> accountRepoMock;
         public Mock<IAccountService> accountServiceMock;
+        public Mock<IMapper> mapperMock;
+        
         public ClientServiceTests()
         {
             clientRepoMock = new Mock<IClientRepository>();
             accountRepoMock = new Mock<IAccountRepository>();
             accountServiceMock = new Mock<IAccountService>();
+            mapperMock = new Mock<IMapper>();
 
             var page = new PaginatedResult<GetClientDto>(new List<GetClientDto>(), 0);
 
@@ -45,9 +49,13 @@ namespace RushHour.Services.Tests
 
             accountServiceMock.Setup(s => s.GenerateSalt());
             accountServiceMock.Setup(s => s.HashPasword(It.IsAny<string>(), It.IsAny<byte[]>()));
-
+            
+            mapperMock
+                .Setup(s => s.Map<GetAccountDto>(It.IsAny<AccountDto>()))
+                .Returns(new GetAccountDto());
+            
             service = new ClientService(clientRepoMock.Object, accountRepoMock.Object,
-                accountServiceMock.Object);
+                accountServiceMock.Object, mapperMock.Object);
         }
 
         [Fact]
@@ -64,8 +72,8 @@ namespace RushHour.Services.Tests
                 Account = new CreateAccountDto { Role = Role.Client }
             };
 
-            // Act
-            var result = await service.CreateClientAsync(dto);
+			// Act
+			var result = await service.CreateClientAsync(dto);
 
             // Assert
             Assert.NotNull(result);
@@ -110,7 +118,7 @@ namespace RushHour.Services.Tests
                 .ReturnsAsync(clientToRead);
 
             service = new ClientService(clientRepoMock.Object, accountRepoMock.Object,
-                accountServiceMock.Object);
+                accountServiceMock.Object, null);
 
             // Act
             var result = await service.GetClientByIdAsync(requesterId, id);

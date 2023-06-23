@@ -5,6 +5,7 @@ using RushHour.Domain.DTOs.ActivityEmployeeDtos;
 using RushHour.Data.Extensions;
 using RushHour.Domain.Abstractions.Repositories;
 using Microsoft.IdentityModel.Tokens;
+using AutoMapper;
 
 namespace RushHour.Data.Repositories
 {
@@ -12,26 +13,22 @@ namespace RushHour.Data.Repositories
     {
         protected RushHourDbContext _context;
         protected DbSet<ActivityEmployee> ActivityEmployees { get; }
-
-        public ActivityEmployeeRepository(RushHourDbContext context)
+        private readonly IMapper _mapper;
+        public ActivityEmployeeRepository(RushHourDbContext context, IMapper mapper)
         {
             _context = context;
-
+            _mapper = mapper;
             ActivityEmployees = _context.Set<ActivityEmployee>();
         }
 
         public async Task<ActivityEmployeeDto> CreateAsync(ActivityEmployeeDto actEmp)
         {
-            ActivityEmployee entity = new()
-            {
-                ActivityId = actEmp.ActivityId,
-                EmployeeId = actEmp.EmployeeId
-            };
-
+            ActivityEmployee entity = _mapper.Map<ActivityEmployee>(actEmp);
+            
             ActivityEmployees.Add(entity);
-
+            
             await _context.SaveChangesAsync();
-
+            
             return actEmp;
         }
 
@@ -97,12 +94,8 @@ namespace RushHour.Data.Repositories
             {
                 actEmps = actEmps.Where(ae => ae.ActivityId == activityId);
             }
-
-            return await actEmps.Select(dto => new ActivityEmployeeDto()
-            {
-                ActivityId = dto.ActivityId,
-                EmployeeId = dto.EmployeeId
-            }).ToListAsync();
+            
+            return await _mapper.ProjectTo<ActivityEmployeeDto>(actEmps).ToListAsync();
         }
 
         public async Task<PaginatedResult<ActivityEmployeeDto>> GetPageAsync(int index, int pageSize, Guid activityId = default(Guid))
@@ -112,13 +105,11 @@ namespace RushHour.Data.Repositories
             if (activityId != default(Guid))
             {
                 actEmps.Where(ae => ae.ActivityId == activityId);
-            }         
-
-            return await actEmps.Select(dto => new ActivityEmployeeDto()
-            {
-                ActivityId = dto.ActivityId,
-                EmployeeId = dto.EmployeeId
-            }).PaginateAsync(index, pageSize);
+            }
+            
+            var mapped = _mapper.ProjectTo<ActivityEmployeeDto>(actEmps);
+            
+            return await mapped.PaginateAsync(index, pageSize);
         }
 
         public async Task<ActivityEmployeeDto> GetByActivityAndEmployeeIdAsync(Guid activityId, Guid employeeId)
@@ -130,12 +121,8 @@ namespace RushHour.Data.Repositories
             {
                 throw new KeyNotFoundException($"No such {typeof(ActivityEmployee)} with activity id: {activityId} and employee id: {employeeId}");
             }
-
-            return new ActivityEmployeeDto()
-            {
-                ActivityId = entity.ActivityId,
-                EmployeeId = entity.EmployeeId
-            };
+            
+            return _mapper.Map<ActivityEmployeeDto>(entity);
         }
     }
 }
