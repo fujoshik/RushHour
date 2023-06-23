@@ -1,4 +1,5 @@
-﻿using Moq;
+﻿using AutoMapper;
+using Moq;
 using RushHour.Domain.Abstractions.Repositories;
 using RushHour.Domain.Abstractions.Services;
 using RushHour.Domain.DTOs;
@@ -17,6 +18,7 @@ namespace RushHour.Services.Tests
         public Mock<IAccountRepository> accountRepoMock;
         public Mock<IProviderRepository> providerRepoMock;
         public Mock<IAccountService> accountServiceMock;
+        public Mock<IMapper> mapperMock;
 
         public EmployeeServiceTests() 
         {
@@ -24,6 +26,7 @@ namespace RushHour.Services.Tests
             accountRepoMock = new Mock<IAccountRepository>();
             providerRepoMock = new Mock<IProviderRepository>();
             accountServiceMock = new Mock<IAccountService>();
+            mapperMock = new Mock<IMapper>();
 
             var page = new PaginatedResult<GetEmployeeDto>(new List<GetEmployeeDto>(), 0);
 
@@ -48,7 +51,7 @@ namespace RushHour.Services.Tests
             accountServiceMock.Setup(s => s.HashPasword(It.IsAny<string>(), It.IsAny<byte[]>()));
 
             service = new EmployeeService(employeeRepoMock.Object, accountRepoMock.Object,
-                providerRepoMock.Object, accountServiceMock.Object);
+                providerRepoMock.Object, accountServiceMock.Object, null);
         }
 
         [Fact]
@@ -69,10 +72,20 @@ namespace RushHour.Services.Tests
 
             providerRepoMock
                 .Setup(s => s.GetByIdAsync(It.IsAny<Guid>()))
-                .ReturnsAsync(provider);           
-
+                .ReturnsAsync(provider);       
+            
+            mapperMock
+                .Setup(s => s.Map<GetEmployeeDto>(It.IsAny<CreateEmployeeDto>()))
+                .Returns(new GetEmployeeDto());
+            mapperMock
+                .Setup(s => s.Map<CreateAccountDto>(It.IsAny<CreateAccountDto>()))
+                .Returns(new CreateAccountDto() { Role = Role.Employee });
+            mapperMock
+                .Setup(s => s.Map<GetAccountDto>(It.IsAny<AccountDto>()))
+                .Returns(new GetAccountDto() { Role = Role.Employee });
+            
             service = new EmployeeService(employeeRepoMock.Object, accountRepoMock.Object,
-                providerRepoMock.Object, accountServiceMock.Object);
+                providerRepoMock.Object, accountServiceMock.Object, mapperMock.Object);
 
             // Act
             var result = await service.CreateEmployeeAsync(Guid.NewGuid(), dto);
@@ -139,7 +152,7 @@ namespace RushHour.Services.Tests
                 .ReturnsAsync(employeeToRead);
 
             service = new EmployeeService(employeeRepoMock.Object, accountRepoMock.Object,
-                providerRepoMock.Object, accountServiceMock.Object);
+                providerRepoMock.Object, accountServiceMock.Object, null);
 
             // Act
             var result = await service.GetEmployeeByIdAsync(requesterId, id);

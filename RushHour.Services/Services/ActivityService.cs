@@ -1,4 +1,5 @@
-﻿using RushHour.Domain.Abstractions.Repositories;
+﻿using AutoMapper;
+using RushHour.Domain.Abstractions.Repositories;
 using RushHour.Domain.Abstractions.Services;
 using RushHour.Domain.DTOs;
 using RushHour.Domain.DTOs.ActivityDtos;
@@ -14,29 +15,25 @@ namespace RushHour.Services.Services
         private readonly IEmployeeService _employeeService;
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IActivityEmployeeRepository _activityEmployeeRepository;
+        private readonly IMapper _mapper;
 
         public ActivityService(IActivityRepository activityRepository, IAccountRepository accountRepository, 
-            IEmployeeService employeeService, IActivityEmployeeRepository activityEmployeeRepository, IEmployeeRepository employeeRepository)
+            IEmployeeService employeeService, IActivityEmployeeRepository activityEmployeeRepository, 
+            IEmployeeRepository employeeRepository, IMapper mapper)
         {
             _activityRepository = activityRepository;
             _accountRepository = accountRepository;
             _employeeService = employeeService;
             _activityEmployeeRepository = activityEmployeeRepository;
             _employeeRepository = employeeRepository;
+            _mapper = mapper;
         }
 
         public async Task<GetActivityDto> CreateActivityAsync(Guid requesterAccountId, CreateActivityDto dto)
         {
             await CheckEmployeesProviderIdAndActivityProviderId(dto.ProviderId, dto.EmployeeIds);
 
-            var getActivity = new GetActivityDto()
-            {
-                Name = dto.Name,
-                Price = dto.Price,
-                Duration = dto.Duration,
-                ProviderId = dto.ProviderId,
-                EmployeeIds = dto.EmployeeIds,
-            };
+            var getActivity = _mapper.Map<GetActivityDto>(dto);
 
             await CheckRequesterIdAndRole(requesterAccountId, getActivity.ProviderId);                      
 
@@ -124,15 +121,8 @@ namespace RushHour.Services.Services
 
             await CheckEmployeesProviderIdAndActivityProviderId(dto.ProviderId, dto.EmployeeIds);
 
-            var newActivityDto = new GetActivityDto()
-            {
-                Id = id,
-                Name = dto.Name,
-                Price = dto.Price,
-                Duration = dto.Duration,
-                ProviderId = dto.ProviderId,
-                EmployeeIds = dto.EmployeeIds
-            };           
+            var newActivityDto = _mapper.Map<GetActivityDto>(dto);
+            newActivityDto.Id = id;          
 
             await CheckRequesterIdAndRole(requesterAccountId, newActivityDto.ProviderId);
 

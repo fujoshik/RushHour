@@ -3,6 +3,7 @@ using RushHour.Domain.Abstractions.Repositories;
 using RushHour.Domain.Abstractions.Services;
 using RushHour.Domain.Middleware;
 using RushHour.Services.Services;
+using AutoMapper;
 
 namespace RushHour.API.Configuration
 {
@@ -19,6 +20,7 @@ namespace RushHour.API.Configuration
             builder.Services.AddScoped<IAppointmentService, AppointmentService>();
             builder.Services.AddScoped<IAccountService, AccountService>();
             builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
+            builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
         }
         public static void AddCustomRepositories(this WebApplicationBuilder builder)
         {

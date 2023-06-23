@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using RushHour.Data.Entities;
 using RushHour.Data.Extensions;
 using RushHour.Domain.Abstractions.Repositories;
@@ -11,40 +12,28 @@ namespace RushHour.Data.Repositories
     {
         protected RushHourDbContext _context;
         protected DbSet<Provider> Providers { get; }
+        private readonly IMapper _mapper;
 
-        public ProviderRepository(RushHourDbContext context)
+        public ProviderRepository(RushHourDbContext context, IMapper mapper)
         {
             _context = context;
             Providers = _context.Set<Provider>();
+            _mapper = mapper;
         }
 
         public async Task<GetProviderDto> CreateAsync(CreateProviderDto dto)
         {
-            Provider entity = new()
-            {
-                Id = Guid.NewGuid(),
-                Name = dto.Name,
-                Website = dto.Website,
-                BusinessDomain = dto.BusinessDomain,
-                Phone = dto.Phone,
-                StartTime = DateTime.Parse(dto.StartTime),
-                EndTime = DateTime.Parse(dto.EndTime)
-            };           
+            Provider entity = _mapper.Map<Provider>(dto);
+
+            entity.Id = Guid.NewGuid();
 
             Providers.Add(entity);
 
             await _context.SaveChangesAsync();
 
-            return new GetProviderDto()
-            {
-                Id = entity.Id,
-                Name = entity.Name,
-                Website = entity.Website,
-                BusinessDomain = entity.BusinessDomain,
-                Phone = entity.Phone,
-                StartTime = TimeOnly.FromDateTime(entity.StartTime),
-                EndTime = TimeOnly.FromDateTime(entity.EndTime)
-            };
+            var mapped = _mapper.Map<GetProviderDto>(entity);
+
+            return mapped;
         }
 
         public async Task DeleteAsync(Guid id)
@@ -65,16 +54,11 @@ namespace RushHour.Data.Repositories
 
         public async Task<PaginatedResult<GetProviderDto>> GetPageAsync(int index, int pageSize)
         {
-            return await Providers.Select(dto => new GetProviderDto()
-            {
-                Id = dto.Id,
-                Name = dto.Name,
-                Website = dto.Website,
-                BusinessDomain = dto.BusinessDomain,
-                Phone = dto.Phone,
-                StartTime = TimeOnly.FromDateTime(dto.StartTime),
-                EndTime = TimeOnly.FromDateTime(dto.EndTime)
-            }).PaginateAsync(index, pageSize);        
+            var result = Providers.ConstructResult(index, pageSize);
+
+            var mappedResult = await _mapper.ProjectTo<GetProviderDto>(result).ToListAsync();
+
+            return mappedResult.PaginateResult(index, pageSize);  
         }
 
         public async Task<GetProviderDto> GetByIdAsync(Guid id)
@@ -84,18 +68,11 @@ namespace RushHour.Data.Repositories
             if (entity is null)
             {
                 throw new KeyNotFoundException($"No such {typeof(Provider)} with id: {id}");
-            }          
+            }
 
-            return new GetProviderDto()
-            {
-                Id = entity.Id,
-                Name = entity.Name,
-                Website = entity.Website,
-                BusinessDomain = entity.BusinessDomain,
-                Phone = entity.Phone,
-                StartTime = TimeOnly.FromDateTime(entity.StartTime),
-                EndTime = TimeOnly.FromDateTime(entity.EndTime)
-            };
+            var mapped = _mapper.Map<GetProviderDto>(entity);
+
+            return mapped;
         }
 
         public async Task UpdateAsync(Guid id, CreateProviderDto dto)
@@ -107,12 +84,12 @@ namespace RushHour.Data.Repositories
                 throw new KeyNotFoundException($"No such {typeof(Provider)} with id: {id}");
             }
 
-            entity.Name = dto.Name;
-            entity.Website = dto.Website;
-            entity.BusinessDomain = dto.BusinessDomain;
-            entity.Phone = dto.Phone;
-            entity.StartTime = DateTime.Parse(dto.StartTime);
-            entity.EndTime = DateTime.Parse(dto.EndTime);
+            var mapped = _mapper.Map<Provider>(dto);
+            mapped.Id = entity.Id;
+
+            _context.Entry(entity).CurrentValues.SetValues(mapped);
+
+            _context.Entry(entity).State = EntityState.Modified;
 
             await _context.SaveChangesAsync();
         }

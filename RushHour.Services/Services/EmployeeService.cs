@@ -1,4 +1,5 @@
-﻿using RushHour.Domain.Abstractions.Repositories;
+﻿using AutoMapper;
+using RushHour.Domain.Abstractions.Repositories;
 using RushHour.Domain.Abstractions.Services;
 using RushHour.Domain.DTOs;
 using RushHour.Domain.DTOs.AccountDtos;
@@ -13,14 +14,16 @@ namespace RushHour.Services.Services
         private readonly IAccountRepository _accountRepository;
         private readonly IProviderRepository _providerRepository;
         private readonly IAccountService _accountService;
+        private readonly IMapper _mapper;
 
         public EmployeeService(IEmployeeRepository employeeRepository, IAccountRepository accountRepository, 
-            IProviderRepository providerRepository, IAccountService accountService)
+            IProviderRepository providerRepository, IAccountService accountService, IMapper mapper)
         {
             _employeeRepository = employeeRepository;
             _accountRepository = accountRepository;
             _providerRepository = providerRepository;
             _accountService = accountService;
+            _mapper = mapper;
         }
 
         public async Task<GetEmployeeDto> CreateEmployeeAsync(Guid requesterId, CreateEmployeeDto dto)
@@ -34,14 +37,7 @@ namespace RushHour.Services.Services
 
             var currentAccountEmployee = await GetEmployeeByAccountAsync(requesterId);
 
-            var getEmployee = new GetEmployeeDto()
-            {
-                Title = dto.Title,
-                Phone = dto.Phone,
-                RatePerHour = dto.RatePerHour,
-                HireDate = dto.HireDate,
-                ProviderId = dto.ProviderId
-            };
+            var getEmployee = _mapper.Map<GetEmployeeDto>(dto);
 
             if (currentAccount.Role == Role.ProviderAdmin)
             {
@@ -53,15 +49,11 @@ namespace RushHour.Services.Services
             if(!dto.Account.Email.EndsWith($"@{provider.BusinessDomain}.com"))
             {
                 throw new ArgumentException("Employee email should contain their provider's business domain");
-            }           
+            }
 
-            var createdAccount = await CreateAccountAsync(new CreateAccountDto()
-            {
-                Email = dto.Account.Email,
-                FullName = dto.Account.FullName,
-                Password = dto.Account.Password,
-                Role = dto.Account.Role
-            });
+            var accountDto = _mapper.Map<CreateAccountDto>(dto.Account);
+
+            var createdAccount = await CreateAccountAsync(accountDto);
 
             var employee = await _employeeRepository.CreateAsync(createdAccount, dto);
 
@@ -86,13 +78,7 @@ namespace RushHour.Services.Services
 
             var account = await _accountRepository.CreateAsync(dto, salt);
 
-            return new GetAccountDto()
-            {
-                Id = account.Id,
-                Email = account.Email,
-                FullName = account.FullName,
-                Role = account.Role
-            };
+            return _mapper.Map<GetAccountDto>(account);
         }
 
         public async Task DeleteAsync(Guid id)
@@ -158,13 +144,7 @@ namespace RushHour.Services.Services
         {
             var account = await _accountRepository.GetByIdAsync(id);
 
-            return new GetAccountDto()
-            {
-                Id = account.Id,
-                Email = account.Email,
-                FullName = account.FullName,
-                Role = account.Role
-            };
+            return _mapper.Map<GetAccountDto>(account);
         }
 
         public async Task UpdateEmployeeAsync(Guid id, CreateEmployeeDto dto, Guid requesterId)
@@ -193,13 +173,7 @@ namespace RushHour.Services.Services
 
         private async Task UpdateAccountAsync(Guid employeeId, CreateAccountDto account, AccountDto currentAccount)
         {
-            var getAccountDto = new GetAccountDto()
-            {
-                Id = currentAccount.Id,
-                Email = currentAccount.Email,
-                FullName = currentAccount.FullName,
-                Role = currentAccount.Role
-            };
+            var getAccountDto = _mapper.Map<GetAccountDto>(currentAccount);
 
             if (account.Role != Role.ProviderAdmin && account.Role != Role.Employee)
             {

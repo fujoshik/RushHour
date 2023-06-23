@@ -41,7 +41,7 @@ namespace RushHour.Services.Tests
                 .ReturnsAsync(() => null);
 
             service = new ProviderService(repositoryMock.Object, employeeRepoMock.Object, 
-                employeeServiceMock.Object, providerWorkDaysRepoMock.Object);
+                employeeServiceMock.Object, providerWorkDaysRepoMock.Object, null);
         }
 
         [Fact]
@@ -75,7 +75,8 @@ namespace RushHour.Services.Tests
                 .Setup(s => s.CreateAsync(It.IsAny<CreateProviderDto>()))
                 .ReturnsAsync(provider);
 
-            service = new ProviderService(repositoryMock.Object, employeeRepoMock.Object, null, providerWorkDaysRepoMock.Object);
+            service = new ProviderService(repositoryMock.Object, employeeRepoMock.Object, null, 
+                providerWorkDaysRepoMock.Object, null);
 
             // Act
             var result = await service.CreateAsync(createProvider);
@@ -130,7 +131,7 @@ namespace RushHour.Services.Tests
                 .ReturnsAsync(workingDays);
 
             service = new ProviderService(repositoryMock.Object, employeeRepoMock.Object, 
-                employeeServiceMock.Object, providerWorkDaysRepoMock.Object);
+                employeeServiceMock.Object, providerWorkDaysRepoMock.Object, null);
 
             // Act
             var result = await service.GetByIdAsync(Guid.NewGuid(), providerId);

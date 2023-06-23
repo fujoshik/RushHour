@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using RushHour.Data.Entities;
 using RushHour.Data.Extensions;
 using RushHour.Domain.Abstractions.Repositories;
@@ -11,37 +12,27 @@ namespace RushHour.Data.Repositories
     {
         protected RushHourDbContext _context;
         protected DbSet<Activity> Activites { get; }
-
-        public ActivityRepository(RushHourDbContext context)
+        private readonly IMapper _mapper;
+        
+        public ActivityRepository(RushHourDbContext context, IMapper mapper)
         {
             _context = context;
-
+            _mapper = mapper;
             Activites = _context.Set<Activity>();
         }
 
         public async Task<GetActivityDto> CreateAsync(CreateActivityDto activity)
         {
-            Activity entity = new()
-            {
-                Id = Guid.NewGuid(),
-                Name = activity.Name,
-                Price = activity.Price,
-                Duration = activity.Duration,
-                ProviderId = activity.ProviderId
-            };
+            Activity entity = _mapper.Map<Activity>(activity);
+            entity.Id = Guid.NewGuid();
 
             Activites.Add(entity);
 
             await _context.SaveChangesAsync();
-
-            return new GetActivityDto()
-            {
-                Id = entity.Id,
-                Name = activity.Name,
-                Price = activity.Price,
-                Duration = activity.Duration,
-                ProviderId = activity.ProviderId
-            };
+            
+            var mapped = _mapper.Map<GetActivityDto>(entity);
+            
+            return mapped;
         }
 
         public async Task DeleteAsync(Guid id)
@@ -68,15 +59,10 @@ namespace RushHour.Data.Repositories
             {
                 activities = activities.Where(e => e.ProviderId == requesterProviderId);
             }
-
-            return await activities.Select(dto => new GetActivityDto()
-            {
-                Id = dto.Id,
-                Name = dto.Name,
-                Price = dto.Price,
-                Duration = dto.Duration,
-                ProviderId = dto.ProviderId              
-            }).PaginateAsync(index, pageSize);
+            
+            var mapped = _mapper.ProjectTo<GetActivityDto>(activities);
+            
+            return await mapped.PaginateAsync(index, pageSize);
         }
 
         public async Task<GetActivityDto> GetByIdAsync(Guid id)
@@ -87,15 +73,8 @@ namespace RushHour.Data.Repositories
             {
                 throw new KeyNotFoundException($"No such {typeof(Activity)} with id: {id}");
             }
-
-            return new GetActivityDto()
-            {
-                Id = entity.Id,
-                Name = entity.Name,
-                Price = entity.Price,
-                Duration = entity.Duration,
-                ProviderId = entity.ProviderId
-            };
+            
+            return _mapper.Map<GetActivityDto>(entity);
         }
 
         public async Task UpdateAsync(Guid id, CreateActivityDto dto)
@@ -106,12 +85,14 @@ namespace RushHour.Data.Repositories
             {
                 throw new KeyNotFoundException($"No such {typeof(Activity)} with id: {id}");
             }
-
-            entity.Name = dto.Name;
-            entity.Price = dto.Price;
-            entity.Duration = dto.Duration;
-            entity.ProviderId = dto.ProviderId;
-
+            
+            var mapped = _mapper.Map<Activity>(dto);
+            mapped.Id = entity.Id;
+            
+            _context.Entry(entity).CurrentValues.SetValues(mapped);
+            
+            _context.Entry(entity).State = EntityState.Modified;
+            
             await _context.SaveChangesAsync();
         }
 

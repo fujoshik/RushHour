@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RushHour.Data.Entities;
 using RushHour.Domain.Abstractions.Repositories;
@@ -10,11 +11,12 @@ namespace RushHour.Data.Repositories
     {
         protected RushHourDbContext _context;
         protected DbSet<ProviderWorkingDays> ProviderWorkingDays { get; }
+        private readonly IMapper _mapper;
 
-        public ProviderWorkingDaysRepository(RushHourDbContext context)
+        public ProviderWorkingDaysRepository(RushHourDbContext context, IMapper mapper)
         {
             _context = context;
-
+            _mapper = mapper;
             ProviderWorkingDays = _context.Set<ProviderWorkingDays>();
         }
 
@@ -66,11 +68,7 @@ namespace RushHour.Data.Repositories
                 providerWorkingDays = providerWorkingDays.Where(p => p.ProviderId == providerId);
             }
 
-            return await providerWorkingDays.Select(dto => new ProviderWorkingDaysDto()
-            {
-                ProviderId = dto.ProviderId,
-                DayOfTheWeek = (int)dto.DayOfTheWeek
-            }).ToListAsync();
+            return await _mapper.ProjectTo<ProviderWorkingDaysDto>(providerWorkingDays).ToListAsync();
         }
     }
 }

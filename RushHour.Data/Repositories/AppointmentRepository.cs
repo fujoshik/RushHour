@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using RushHour.Data.Entities;
 using RushHour.Data.Extensions;
 using RushHour.Domain.Abstractions.Repositories;
@@ -12,37 +13,28 @@ namespace RushHour.Data.Repositories
     {
         protected RushHourDbContext _context;
         protected DbSet<Appointment> Appointments { get; }
+        private readonly IMapper _mapper;
 
-        public AppointmentRepository(RushHourDbContext context)
+        public AppointmentRepository(RushHourDbContext context, IMapper mapper)
         {
             _context = context;
-
+            _mapper = mapper;
             Appointments = _context.Set<Appointment>();
         }
 
         public async Task<GetAppointmentDto> CreateAsync(CreateAppointmentDto appointment, DateTime endDate)
         {
-            Appointment entity = new()
-            {
-                Id = Guid.NewGuid(),
-                StartDate = appointment.StartDate,
-                EndDate = endDate,
-                EmployeeId = appointment.EmployeeId,
-                ClientId = appointment.ClientId
-            };
+            Appointment entity = _mapper.Map<Appointment>(appointment);
+            entity.Id = Guid.NewGuid();
+            entity.EndDate = endDate;
 
             Appointments.Add(entity);
 
             await _context.SaveChangesAsync();
 
-            return new GetAppointmentDto()
-            {
-                Id = entity.Id,
-                StartDate = appointment.StartDate,
-                EndDate = endDate,
-                EmployeeId = appointment.EmployeeId,
-                ClientId = appointment.ClientId
-            };
+            var mapped = _mapper.Map<GetAppointmentDto>(entity);
+            
+            return mapped;
         }
 
         public async Task DeleteAsync(Guid id)
@@ -83,15 +75,10 @@ namespace RushHour.Data.Repositories
             {
                 appointments = Appointments.Where(a => a.ClientId == requesterId);
             }
-
-            return await appointments.Select(dto => new GetAppointmentDto()
-            {
-                Id = dto.Id,
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
-                EmployeeId = dto.EmployeeId,
-                ClientId = dto.ClientId
-            }).PaginateAsync(index, pageSize);
+            
+            var mapped = _mapper.ProjectTo<GetAppointmentDto>(appointments);
+            
+            return await mapped.PaginateAsync(index, pageSize);
         }
 
         public async Task<GetAppointmentDto> GetByIdAsync(Guid id)
@@ -103,14 +90,7 @@ namespace RushHour.Data.Repositories
                 throw new KeyNotFoundException($"No such {typeof(Appointment)} with id: {id}");
             }
 
-            return new GetAppointmentDto()
-            {
-                Id = entity.Id,
-                StartDate = entity.StartDate,
-                EndDate = entity.EndDate,
-                EmployeeId = entity.EmployeeId,
-                ClientId = entity.ClientId
-            };
+            return _mapper.Map<GetAppointmentDto>(entity);
         }
 
         public async Task UpdateAsync(Guid id, CreateAppointmentDto dto, DateTime endDate)
@@ -122,10 +102,13 @@ namespace RushHour.Data.Repositories
                 throw new KeyNotFoundException($"No such {typeof(Appointment)} with id: {id}");
             }
 
-            entity.StartDate = dto.StartDate;
-            entity.EndDate = endDate;
-            entity.EmployeeId = dto.EmployeeId;
-            entity.ClientId = dto.ClientId;
+            var mapped = _mapper.Map<Appointment>(dto);
+            mapped.Id = entity.Id;
+            mapped.EndDate = endDate;
+
+            _context.Entry(entity).CurrentValues.SetValues(mapped);
+
+            _context.Entry(entity).State = EntityState.Modified;
 
             await _context.SaveChangesAsync();
         }

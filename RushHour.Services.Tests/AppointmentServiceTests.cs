@@ -1,3 +1,4 @@
+using AutoMapper;
 using Moq;
 using RushHour.Domain.Abstractions.Repositories;
 using RushHour.Domain.Abstractions.Services;
@@ -22,6 +23,7 @@ namespace RushHour.Services.Tests
         public Mock<IProviderRepository> providerRepoMock;
         public Mock<IProviderWorkingDaysRepository> providerWorkDaysRepoMock;
         public Mock<IEmployeeRepository> employeeRepoMock;
+        public Mock<IMapper> mapperMock;
 
         public AppointmentServiceTests()
         {
@@ -31,9 +33,11 @@ namespace RushHour.Services.Tests
             providerRepoMock = new Mock<IProviderRepository>();
             providerWorkDaysRepoMock = new Mock<IProviderWorkingDaysRepository>();
             employeeRepoMock = new Mock<IEmployeeRepository>();
+            mapperMock = new Mock<IMapper>();
 
             service = new AppointmentService(repositoryMock.Object, accountRepoMock.Object, null, null,
-                activityRepoMock.Object, providerRepoMock.Object, providerWorkDaysRepoMock.Object, null);
+                activityRepoMock.Object, providerRepoMock.Object, providerWorkDaysRepoMock.Object, 
+                null, mapperMock.Object);
         }
 
         [Fact]
@@ -55,7 +59,9 @@ namespace RushHour.Services.Tests
 
             var employee = CreateMockEmployee(appointment.EmployeeId, provider.Id);
 
-            CreateTestSetup(provider, activity, appointment, workingDays, employee); 
+            var getAppointment = CreateMockGetAppointment(activity.Id);
+
+            CreateTestSetup(provider, activity, appointment, workingDays, employee, getAppointment); 
 
             // Act
             var result = await service.CreateAppointmentAsync(Guid.NewGuid(), appointment);
@@ -159,6 +165,16 @@ namespace RushHour.Services.Tests
             };
         }
 
+		private GetAppointmentDto CreateMockGetAppointment(Guid activityId)
+		{
+			return new GetAppointmentDto()
+			{
+				ActivityId = activityId,
+				StartDate = new DateTime(2023, 06, 05, 11, 20, 0),
+				EmployeeId = Guid.NewGuid()
+			};
+		}
+        
         private GetEmployeeDto CreateMockEmployee(Guid employeeId, Guid providerId)
         {
             return new GetEmployeeDto()
@@ -186,7 +202,8 @@ namespace RushHour.Services.Tests
         }
 
         private void CreateTestSetup(GetProviderDto provider, GetActivityDto activity, 
-            CreateAppointmentDto appointment, List<ProviderWorkingDaysDto> workingDays, GetEmployeeDto employee)
+            CreateAppointmentDto appointment, List<ProviderWorkingDaysDto> workingDays, 
+            GetEmployeeDto employee, GetAppointmentDto getAppointment)
         {
             repositoryMock
                 .Setup(s => s.GetPageAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<Role>(), It.IsAny<Guid>()))
@@ -215,8 +232,13 @@ namespace RushHour.Services.Tests
                 .Setup(s => s.GetByIdAsync(It.IsAny<Guid>()))
                 .ReturnsAsync(employee);
 
+            mapperMock
+                .Setup(s => s.Map<GetAppointmentDto>(It.IsAny<CreateAppointmentDto>()))
+                .Returns(getAppointment);
+
             service = new AppointmentService(repositoryMock.Object, accountRepoMock.Object, null, null,
-                activityRepoMock.Object, providerRepoMock.Object, providerWorkDaysRepoMock.Object, employeeRepoMock.Object);
+                activityRepoMock.Object, providerRepoMock.Object, providerWorkDaysRepoMock.Object, 
+                employeeRepoMock.Object, mapperMock.Object);
         }
     }
 }

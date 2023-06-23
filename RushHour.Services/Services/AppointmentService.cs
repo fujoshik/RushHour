@@ -1,4 +1,5 @@
-﻿using RushHour.Domain.Abstractions.Repositories;
+﻿using AutoMapper;
+using RushHour.Domain.Abstractions.Repositories;
 using RushHour.Domain.Abstractions.Services;
 using RushHour.Domain.DTOs;
 using RushHour.Domain.DTOs.AccountDtos;
@@ -17,11 +18,12 @@ namespace RushHour.Services.Services
         private readonly IClientService _clientService;
         private readonly IProviderRepository _providerRepository;
         private readonly IProviderWorkingDaysRepository _providerWorkingDaysRepo;
+        private readonly IMapper _mapper;
 
         public AppointmentService(IAppointmentRepository appointmentRepository, 
             IAccountRepository accountRepository, IEmployeeService employeeService, 
             IClientService clientService, IActivityRepository activityRepository, IProviderRepository providerRepository, 
-            IProviderWorkingDaysRepository providerWorkingDaysRepo, IEmployeeRepository employeeRepository)
+            IProviderWorkingDaysRepository providerWorkingDaysRepo, IEmployeeRepository employeeRepository, IMapper mapper)
         {
             _appointmentRepository = appointmentRepository;
             _accountRepository = accountRepository;
@@ -31,18 +33,13 @@ namespace RushHour.Services.Services
             _providerRepository = providerRepository;
             _providerWorkingDaysRepo = providerWorkingDaysRepo;
             _employeeRepository = employeeRepository;
+            _mapper = mapper;
         }
 
         public async Task<GetAppointmentDto> CreateAppointmentAsync(Guid requesterAccountId, CreateAppointmentDto dto)
         {
-            var getAppointment = new GetAppointmentDto()
-            {
-                StartDate = dto.StartDate,
-                EndDate = await CalculateEndDateOfAppointment(dto.StartDate, dto.ActivityId),
-                EmployeeId = dto.EmployeeId,
-                ClientId = dto.ClientId,
-                ActivityId = dto.ActivityId
-            };
+            var getAppointment = _mapper.Map<GetAppointmentDto>(dto);
+            getAppointment.EndDate = await CalculateEndDateOfAppointment(dto.StartDate, dto.ActivityId);
 
             await CheckProviderAvailability(getAppointment);
 
@@ -126,15 +123,9 @@ namespace RushHour.Services.Services
                 throw new KeyNotFoundException($"No such {typeof(GetAppointmentDto)} with id: {id}");
             }
 
-            var newAppointmentDto = new GetAppointmentDto()
-            {
-                Id = id,
-                StartDate = dto.StartDate,
-                EndDate = await CalculateEndDateOfAppointment(dto.StartDate, dto.ActivityId),
-                EmployeeId = dto.EmployeeId,
-                ClientId = dto.ClientId,
-                ActivityId = dto.ActivityId
-            };
+            var newAppointmentDto = _mapper.Map<GetAppointmentDto>(dto);
+            newAppointmentDto.Id = id;
+            newAppointmentDto.EndDate = await CalculateEndDateOfAppointment(dto.StartDate, dto.ActivityId);
 
             await CheckProviderAvailability(newAppointmentDto);
 

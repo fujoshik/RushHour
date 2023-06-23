@@ -4,6 +4,7 @@ using RushHour.Domain.DTOs.AccountDtos;
 using RushHour.Domain.DTOs;
 using RushHour.Domain.Enums;
 using RushHour.Domain.DTOs.ClientDtos;
+using AutoMapper;
 
 namespace RushHour.Services.Services
 {
@@ -12,13 +13,15 @@ namespace RushHour.Services.Services
         private readonly IClientRepository _clientRepository;
         private readonly IAccountRepository _accountRepository;
         private readonly IAccountService _accountService;
+        private readonly IMapper _mapper;
 
         public ClientService(IClientRepository clientRepository, IAccountRepository accountRepository, 
-            IAccountService accountService)
+            IAccountService accountService, IMapper mapper)
         {
             _clientRepository = clientRepository;
             _accountRepository = accountRepository;
             _accountService = accountService;
+            _mapper = mapper;
         }
 
         public async Task<GetClientDto> CreateClientAsync(CreateClientDto dto)
@@ -55,13 +58,7 @@ namespace RushHour.Services.Services
 
             var account = await _accountRepository.CreateAsync(dto, salt);
 
-            return new GetAccountDto()
-            {
-                Id = account.Id,
-                Email = account.Email,
-                FullName = account.FullName,
-                Role = account.Role
-            };
+            return _mapper.Map<GetAccountDto>(account);
         }
 
         public async Task DeleteAsync(Guid id)
@@ -105,13 +102,7 @@ namespace RushHour.Services.Services
         {
             var account = await _accountRepository.GetByIdAsync(id);
 
-            return new GetAccountDto()
-            {
-                Id = account.Id,
-                Email = account.Email,
-                FullName = account.FullName,
-                Role = account.Role
-            };
+            return _mapper.Map<GetAccountDto>(account);
         }
 
         public async Task UpdateClientAsync(Guid id, UpdateClientDto dto, Guid requesterId)
@@ -149,12 +140,8 @@ namespace RushHour.Services.Services
                     throw new UnauthorizedAccessException("Can't access a different client");
                 }
 
-                var createAccount = new CreateAccountDto()
-                {
-                    Email = account.Email,
-                    FullName = account.FullName,
-                    Role = Role.Client
-                };
+                var createAccount = _mapper.Map<CreateAccountDto>(account);
+                createAccount.Role = Role.Client;
 
                 await _accountRepository.UpdateAsync(client.AccountId, createAccount);
             }
@@ -164,12 +151,8 @@ namespace RushHour.Services.Services
         {
             var client = await _clientRepository.GetByIdAsync(clientId);
 
-            var createAccount = new CreateAccountDto()
-            {
-                Email = dto.Email,
-                FullName = dto.FullName,
-                Role = Role.Client
-            };
+            var createAccount = _mapper.Map<CreateAccountDto>(dto);
+            createAccount.Role = Role.Client;
 
             await _accountRepository.UpdateAsync(client.AccountId, createAccount);
         }

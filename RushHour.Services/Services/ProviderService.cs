@@ -1,4 +1,5 @@
-﻿using RushHour.Domain.Abstractions.Repositories;
+﻿using AutoMapper;
+using RushHour.Domain.Abstractions.Repositories;
 using RushHour.Domain.Abstractions.Services;
 using RushHour.Domain.DTOs;
 using RushHour.Domain.DTOs.ProviderDtos;
@@ -13,14 +14,16 @@ namespace RushHour.Services.Services
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IEmployeeService _employeeService;
         private readonly IProviderWorkingDaysRepository _providerWorkingDaysRepo;
+        private readonly IMapper _mapper;
 
         public ProviderService(IProviderRepository repository, IEmployeeRepository employeeRepository, 
-            IEmployeeService employeeService, IProviderWorkingDaysRepository providerWorkingDaysRepo)
+            IEmployeeService employeeService, IProviderWorkingDaysRepository providerWorkingDaysRepo, IMapper mapper)
         {
             _repository = repository;
             _employeeRepository = employeeRepository;
             _employeeService = employeeService;
             _providerWorkingDaysRepo = providerWorkingDaysRepo;
+            _mapper = mapper;
         }
 
         public async Task<GetProviderDto> CreateAsync(CreateProviderDto dto)
@@ -85,17 +88,8 @@ namespace RushHour.Services.Services
                 throw new ArgumentNullException(nameof(requesterId));
             }
 
-            var provider = new GetProviderDto()
-            {
-                Id = id,
-                Name = dto.Name,
-                Website = dto.Website,
-                BusinessDomain = dto.BusinessDomain,
-                Phone = dto.Phone,
-                StartTime = TimeOnly.Parse(dto.StartTime),
-                EndTime = TimeOnly.Parse(dto.EndTime),
-                WorkingDays = dto.WorkingDays
-            };
+            var provider = _mapper.Map<GetProviderDto>(dto);
+            provider.Id = id;
 
             await CheckProviderAdminIdAndProviderId(requesterId, provider);
 
