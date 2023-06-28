@@ -15,10 +15,8 @@ namespace RushHour.Domain.DTOs.ProviderDtos
         [Url]
         public string Website { get; set; }
 
-        [RegularExpression(@"^[a-zA-Z]+[a-zA-Z0-9""'\s-]*$", ErrorMessage = "Letters and numbers only")]
         public string BusinessDomain { get; set; }
 
-        [Phone]
         public string Phone { get; set; }
 
         public string StartTime { get; set; }

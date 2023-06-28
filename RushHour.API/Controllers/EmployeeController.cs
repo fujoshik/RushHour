@@ -17,7 +17,7 @@ namespace RushHour.API.Controllers
 
         public EmployeeController(IEmployeeService service, IHttpContextAccessor http)
         {
-            _service = service;            
+            _service = service;
             requesterId = http.GetRequesterId();
         }
 
