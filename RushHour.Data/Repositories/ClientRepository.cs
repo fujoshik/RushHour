@@ -111,14 +111,13 @@ namespace RushHour.Data.Repositories
         {
             var client = await _context.Set<Client>().FindAsync(id);
 
-            var account = await _context.Set<Account>().FindAsync(client.AccountId);
-            _context.Set<Account>().Remove(account);
+            await _context.Set<Account>()
+                .Where(a => a.Id == client.AccountId)
+                .ExecuteDeleteAsync();
 
-            var appointments = await _context.Set<Appointment>()
+            await _context.Set<Appointment>()
                 .Where(a => a.ClientId == id)
-                .ToListAsync();
-
-            appointments.ForEach(a => _context.Set<Appointment>().Remove(a)); ;
+                .ExecuteDeleteAsync();
         }
     }
 }

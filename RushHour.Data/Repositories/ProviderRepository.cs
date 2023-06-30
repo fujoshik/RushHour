@@ -104,15 +104,12 @@ namespace RushHour.Data.Repositories
                 .Where(a => a.ProviderId == id)
                 .ToListAsync();
 
-            List<Appointment> appointments = new();
-
             foreach (var employee in employees)
             {
-                appointments.AddRange(_context.Set<Appointment>()
-                    .Where(a => a.EmployeeId == employee.Id));
+                await _context.Set<Appointment>()
+                    .Where(a => a.EmployeeId == employee.Id)
+                    .ExecuteDeleteAsync();
             }
-
-            DeleteAppointments(appointments);
 
             await DeleteEmployees(employees, activities);                 
         }
@@ -120,13 +117,12 @@ namespace RushHour.Data.Repositories
         private async Task DeleteEmployees(List<Employee> employees, List<Activity> activities)
         {
             List<Account> accounts = new List<Account>();
+
             foreach (var employee in employees)
             {
-                var actEmp = await _context.Set<ActivityEmployee>()
+                await _context.Set<ActivityEmployee>()
                     .Where(ae => ae.EmployeeId == employee.Id)
-                    .ToListAsync();
-
-                actEmp.ForEach(ae => _context.Set<ActivityEmployee>().Remove(ae));
+                    .ExecuteDeleteAsync();
 
                 var account = await _context.Set<Account>().FindAsync(employee.AccountId);
                 
@@ -134,29 +130,30 @@ namespace RushHour.Data.Repositories
                     accounts.Add(account);
 
             }
+
             await DeleteActivities(activities);
 
-            accounts.ForEach(a => _context.Set<Account>().Remove(a));
-            employees.ForEach(e => _context.Set<Employee>().Remove(e));
+            await _context.Set<Account>()
+                .Where(a => accounts.Contains(a))
+                .ExecuteDeleteAsync();
+
+            await _context.Set<Employee>()
+                .Where(e => employees.Contains(e))
+                .ExecuteDeleteAsync();
         }
 
         private async Task DeleteActivities(List<Activity> activities)
         {
             foreach (var activity in activities)
             {
-                var actEmp = await _context.Set<ActivityEmployee>()
+                await _context.Set<ActivityEmployee>()
                     .Where(ae => ae.ActivityId == activity.Id)
-                    .ToListAsync();
-
-                actEmp.ForEach(ae => _context.Set<ActivityEmployee>().Remove(ae));
+                    .ExecuteDeleteAsync();
             }
 
-            activities.ForEach(a => _context.Set<Activity>().Remove(a));
-        }
-
-        private void DeleteAppointments(List<Appointment> appointments)
-        {
-            appointments.ForEach(a => _context.Set<Appointment>().Remove(a));
+            await _context.Set<Activity>()
+                .Where(a => activities.Contains(a))
+                .ExecuteDeleteAsync();
         }
     }
 }

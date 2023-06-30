@@ -118,9 +118,9 @@ namespace RushHour.Data.Repositories
             {
                 var employee = _context.Set<Employee>().FirstOrDefault(e => e.AccountId == id);
 
-                var appointments = await _context.Set<Appointment>()
+                await _context.Set<Appointment>()
                     .Where(a => a.EmployeeId == employee.Id)
-                    .ToListAsync();
+                    .ExecuteDeleteAsync();
 
                 var actEmps = await _context.Set<ActivityEmployee>()
                     .Where(ae => ae.EmployeeId == employee.Id)
@@ -135,8 +135,6 @@ namespace RushHour.Data.Repositories
                     activity.Employees.Remove(employeeToRemove);
                 }
 
-                appointments.ForEach(a => _context.Set<Appointment>().Remove(a));
-
                 actEmps.ForEach(ae => _context.Set<ActivityEmployee>().Remove(ae));
 
                 _context.Set<Employee>().Remove(employee);
@@ -145,11 +143,9 @@ namespace RushHour.Data.Repositories
             {
                 var client = _context.Set<Client>().FirstOrDefault(e => e.AccountId == id);
 
-                var appointments = await _context.Set<Appointment>()
-                .Where(a => a.ClientId == client.Id)
-                .ToListAsync();
-
-                appointments.ForEach(a => _context.Set<Appointment>().Remove(a));
+                await _context.Set<Appointment>()
+                    .Where(a => a.ClientId == client.Id)
+                    .ExecuteDeleteAsync();
 
                 _context.Set<Client>().Remove(client);
             }

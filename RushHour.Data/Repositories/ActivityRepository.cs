@@ -98,17 +98,13 @@ namespace RushHour.Data.Repositories
 
         private async Task CascadeDelete(Guid id)
         {
-            var appointments = await _context.Set<Appointment>()
+            await _context.Set<Appointment>()
                 .Where(a => a.ActivityId == id)
-                .ToListAsync();
+                .ExecuteDeleteAsync();
 
-            appointments.ForEach(a => _context.Set<Appointment>().Remove(a));
-
-            var actEmps = await _context.Set<ActivityEmployee>()
+            await _context.Set<ActivityEmployee>()
                   .Where(ae => ae.ActivityId == id)
-                  .ToListAsync();
-
-            actEmps.ForEach(ae => _context.Set<ActivityEmployee>().Remove(ae));
+                  .ExecuteDeleteAsync();
         }
     }
 }
