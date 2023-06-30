@@ -3,19 +3,7 @@ using RushHour.Domain.Abstractions.Repositories;
 using RushHour.Domain.Abstractions.Services;
 using RushHour.Domain.Middleware;
 using RushHour.Services.Services;
-using FluentValidation;
-using RushHour.Domain.DTOs.ProviderDtos;
 using RushHour.Domain.Validators.Provider;
-using RushHour.Domain.DTOs.EmployeeDtos;
-using RushHour.Domain.Validators.Employee;
-using RushHour.Domain.DTOs.ClientDtos;
-using RushHour.Domain.Validators.Client;
-using RushHour.Domain.DTOs.AppointmentDtos;
-using RushHour.Domain.Validators.Appointment;
-using RushHour.Domain.DTOs.ActivityDtos;
-using RushHour.Domain.Validators.Activity;
-using RushHour.Domain.DTOs.AccountDtos;
-using RushHour.Domain.Validators.Account;
 using FluentValidation.AspNetCore;
 
 namespace RushHour.API.Configuration

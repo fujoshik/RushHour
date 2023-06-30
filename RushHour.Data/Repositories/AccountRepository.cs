@@ -90,8 +90,12 @@ namespace RushHour.Data.Repositories
 
             if(entity.Role == Role.Employee || entity.Role == Role.ProviderAdmin)
             {
-                await CascadeDelete(id);
-            }           
+                await CascadeDelete(id, Role.Employee);
+            }
+            else
+            {
+                await CascadeDelete(id, Role.Client);
+            }
 
             await _context.SaveChangesAsync();
         }
@@ -108,32 +112,47 @@ namespace RushHour.Data.Repositories
                 .ToListAsync();
         }
         
-        private async Task CascadeDelete(Guid id)
+        private async Task CascadeDelete(Guid id, Role role)
         {
-            var employee = _context.Set<Employee>().FirstOrDefault(e => e.AccountId == id);
-            
-            var appointments = await _context.Set<Appointment>()
-                .Where(a => a.EmployeeId == employee.Id)
-                .ToListAsync();
-            
-            var actEmps = await _context.Set<ActivityEmployee>()
-                .Where(ae => ae.EmployeeId == employee.Id)
-                .ToListAsync();
-            
-            foreach (var actEmp in actEmps)
+            if (role == Role.Employee)
             {
-                var employeeToRemove = await _context.Set<Employee>().FindAsync(actEmp.EmployeeId);
-                
-                var activity = await _context.Set<Activity>().FindAsync(actEmp.ActivityId);
-                
-                activity.Employees.Remove(employeeToRemove);
+                var employee = _context.Set<Employee>().FirstOrDefault(e => e.AccountId == id);
+
+                var appointments = await _context.Set<Appointment>()
+                    .Where(a => a.EmployeeId == employee.Id)
+                    .ToListAsync();
+
+                var actEmps = await _context.Set<ActivityEmployee>()
+                    .Where(ae => ae.EmployeeId == employee.Id)
+                    .ToListAsync();
+
+                foreach (var actEmp in actEmps)
+                {
+                    var employeeToRemove = await _context.Set<Employee>().FindAsync(actEmp.EmployeeId);
+
+                    var activity = await _context.Set<Activity>().FindAsync(actEmp.ActivityId);
+
+                    activity.Employees.Remove(employeeToRemove);
+                }
+
+                appointments.ForEach(a => _context.Set<Appointment>().Remove(a));
+
+                actEmps.ForEach(ae => _context.Set<ActivityEmployee>().Remove(ae));
+
+                _context.Set<Employee>().Remove(employee);
             }
-            
-            appointments.ForEach(a => _context.Set<Appointment>().Remove(a));
-            
-            actEmps.ForEach(ae => _context.Set<ActivityEmployee>().Remove(ae));
-            
-            _context.Set<Employee>().Remove(employee);
+            else
+            {
+                var client = _context.Set<Client>().FirstOrDefault(e => e.AccountId == id);
+
+                var appointments = await _context.Set<Appointment>()
+                .Where(a => a.ClientId == client.Id)
+                .ToListAsync();
+
+                appointments.ForEach(a => _context.Set<Appointment>().Remove(a));
+
+                _context.Set<Client>().Remove(client);
+            }
         }
 	}
 }

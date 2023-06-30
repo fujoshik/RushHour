@@ -9,7 +9,7 @@ namespace RushHour.Domain.Validators.Client
         {
             RuleFor(x => x.Phone)
                 .NotEmpty()
-                .Matches(@"^[0 - 9] +$").WithMessage("{PropertyName} is not valid");
+                .Matches(@"^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$").WithMessage("{PropertyName} is not valid");
 
             RuleFor(x => x.Address)
                 .NotEmpty()

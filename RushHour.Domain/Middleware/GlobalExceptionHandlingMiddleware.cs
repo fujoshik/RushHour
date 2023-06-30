@@ -20,20 +20,57 @@ namespace RushHour.Domain.Middleware
             }
             catch (Exception e)
             {
-                _logger.LogError(e, e.Message);
-
-                context.Response.ContentType = "application/json";
-                context.Response.StatusCode =
-                    (int)HttpStatusCode.InternalServerError;
-
-                var error = new Error()
-                {
-                    StatusCode = context.Response.StatusCode.ToString(),
-                    Message = e.Message
-                };
-
-                await context.Response.WriteAsync(error.ToString());               
+                await HandleExceptionAsync(context, e);                              
             }
+        }
+
+        private async Task HandleExceptionAsync(HttpContext context, Exception e)
+        {
+            _logger.LogError(e, e.Message);
+
+            int status;
+            string message = "";
+
+            var exceptionType = e.GetType();
+
+            if (exceptionType == typeof(KeyNotFoundException))
+            {
+                status = (int)HttpStatusCode.NotFound;
+                message = e.Message;
+            }
+            else if (exceptionType == typeof(ArgumentNullException))
+            {
+                status = (int)HttpStatusCode.NotFound;
+                message = e.Message;
+            }
+            else if (exceptionType == typeof(ArgumentNullException))
+            {
+                status = (int)HttpStatusCode.NotFound;
+                message = e.Message;
+            }
+            else if (exceptionType == typeof(UnauthorizedAccessException))
+            {
+                status = (int)HttpStatusCode.Unauthorized;
+                message = e.Message;
+            }
+            else if (exceptionType == typeof(ArgumentOutOfRangeException))
+            {
+                status = (int)HttpStatusCode.BadRequest;
+                message = e.Message;
+            }
+            else
+            {
+                status = (int)HttpStatusCode.InternalServerError;
+                message = e.Message;
+            }
+
+            context.Response.StatusCode = (int)status;
+
+            context.Response.ContentType = "application/json";
+
+            Error error = new Error { StatusCode = status.ToString(), Message = message };
+
+            await context.Response.WriteAsync(error.ToString());
         }
     }
 }

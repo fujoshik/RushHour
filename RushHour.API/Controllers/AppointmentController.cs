@@ -22,7 +22,7 @@ namespace RushHour.API.Controllers
         }
 
         [HttpGet]
-        [AuthorizeRoles(Role.Admin, Role.ProviderAdmin)]
+        [AuthorizeRoles(Role.Admin, Role.ProviderAdmin, Role.Employee, Role.Client)]
         public async Task<ActionResult<IEnumerable<GetAppointmentDto>>> GetPage([FromQuery] int index, [FromQuery] int pageSize)
         {
             return Ok(await _service.GetPageAsync(index, pageSize, requesterId));

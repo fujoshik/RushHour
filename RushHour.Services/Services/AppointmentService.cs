@@ -74,6 +74,8 @@ namespace RushHour.Services.Services
 
             await CheckRequesterIdAndAppointment(requesterAccount, appointment);
 
+            await CheckRequesterIdAndEmployeeId(requesterAccount, appointment);
+
             await _appointmentRepository.DeleteAsync(id);
         }
 
@@ -109,6 +111,8 @@ namespace RushHour.Services.Services
 
             await CheckRequesterIdAndAppointment(requesterAccount, appointment);
 
+            await CheckRequesterIdAndEmployeeId(requesterAccount, appointment);
+
             appointment.TotalPrice = await CalculateTotalPriceOfActivities(appointment.ActivityId);
 
             return appointment;
@@ -134,6 +138,8 @@ namespace RushHour.Services.Services
             var requesterAccount = await _accountRepository.GetByIdAsync(requesterAccountId);
 
             await CheckRequesterIdAndAppointment(requesterAccount, newAppointmentDto);
+
+            await CheckRequesterIdAndEmployeeId(requesterAccount, newAppointmentDto);
 
             await _appointmentRepository.UpdateAsync(id, dto, newAppointmentDto.EndDate);
         }     
@@ -224,17 +230,20 @@ namespace RushHour.Services.Services
             else if (requesterAccount.Role == Role.ProviderAdmin)
             {
                 await _employeeService.GetEmployeeByIdAsync(requesterAccount.Id, appointment.EmployeeId);
-            }
+            }         
+        }
 
-            else if (requesterAccount.Role == Role.Employee)
+        private async Task CheckRequesterIdAndEmployeeId(AccountDto requesterAccount, GetAppointmentDto appointment)
+        {
+            if (requesterAccount.Role == Role.Employee)
             {
                 var employee = await _employeeService.GetEmployeeByAccountAsync(requesterAccount.Id);
 
                 if (appointment.EmployeeId != employee.Id)
                 {
                     throw new UnauthorizedAccessException("Can't access an appointment for another employee");
-                }               
-            }           
+                }
+            }
         }
 
         private async Task<PaginatedResult<GetAppointmentDto>> GetAppointmentsBasedOnRole(PaginatedResult<GetAppointmentDto> appointments, Guid requesterAccountId, int index, int pageSize)

@@ -56,7 +56,7 @@ namespace RushHour.Data.Repositories
         {
             var result = Providers.ConstructResult(index, pageSize);
 
-            var mappedResult = await _mapper.ProjectTo<GetProviderDto>(result).ToListAsync();
+            var mappedResult = _mapper.Map<List<GetProviderDto>>(result);
 
             return mappedResult.PaginateResult(index, pageSize);  
         }
@@ -108,20 +108,18 @@ namespace RushHour.Data.Repositories
 
             foreach (var employee in employees)
             {
-                appointments = await _context.Set<Appointment>()
-                    .Where(a => a.EmployeeId == employee.Id)
-                    .ToListAsync();
+                appointments.AddRange(_context.Set<Appointment>()
+                    .Where(a => a.EmployeeId == employee.Id));
             }
 
-            await DeleteEmployees(employees);
+            DeleteAppointments(appointments);
 
-            await DeleteActivities(activities);
-
-            DeleteAppointments(appointments);          
+            await DeleteEmployees(employees, activities);                 
         }
 
-        private async Task DeleteEmployees(List<Employee> employees)
+        private async Task DeleteEmployees(List<Employee> employees, List<Activity> activities)
         {
+            List<Account> accounts = new List<Account>();
             foreach (var employee in employees)
             {
                 var actEmp = await _context.Set<ActivityEmployee>()
@@ -131,10 +129,14 @@ namespace RushHour.Data.Repositories
                 actEmp.ForEach(ae => _context.Set<ActivityEmployee>().Remove(ae));
 
                 var account = await _context.Set<Account>().FindAsync(employee.AccountId);
+                
+                if(account is not null)
+                    accounts.Add(account);
 
-                _context.Set<Account>().Remove(account);
             }
+            await DeleteActivities(activities);
 
+            accounts.ForEach(a => _context.Set<Account>().Remove(a));
             employees.ForEach(e => _context.Set<Employee>().Remove(e));
         }
 
